@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<!-- NURA Cells - Mi Experiencia | Copyright (C) 2026 NURA Cells | SPDX-License-Identifier: AGPL-3.0-or-later -->
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mi Experiencia NURA</title>
+<style>
+  :root{
+    --green:#2F5233; --green-d:#223B27; --sage:#5B8C5A; --tint:#EFF7EC; --amber:#E8963C;
+    --ink:#1B2A1E; --soft:#4B5A4E; --faint:#8A968B; --line:#D9E4D6; --bg:#F6F9F4; --surf:#ffffff;
+  }
+  @media (prefers-color-scheme:dark){:root{
+    --green:#7FBF7C; --green-d:#BFE3BB; --sage:#5B8C5A; --tint:#18271B; --amber:#EBA867;
+    --ink:#E9F1E9; --soft:#A9B7A9; --faint:#7A867B; --line:#26382A; --bg:#0E1710; --surf:#152018;
+  }}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,"Segoe UI",system-ui,Roboto,sans-serif;line-height:1.55}
+  .wrap{max-width:640px;margin:0 auto;padding:30px 20px 60px}
+  header{text-align:center;margin-bottom:26px}
+  .brand{display:inline-flex;align-items:center;gap:9px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;font-size:12.5px;color:var(--green)}
+  h1{font-family:Georgia,"Palatino Linotype",serif;font-size:1.85rem;margin:16px 0 6px;color:var(--green);line-height:1.2}
+  .sub{color:var(--soft);margin:0}
+  .lang{display:flex;gap:6px;justify-content:center;margin-top:14px}
+  .lang button{border:1px solid var(--line);background:var(--surf);color:var(--soft);padding:5px 14px;border-radius:999px;font-size:12px;cursor:pointer}
+  .lang button.on{background:var(--green);color:#fff;border-color:var(--green)}
+
+  .progress{background:var(--surf);border:1px solid var(--line);border-radius:16px;padding:10px 16px 8px;margin-bottom:22px}
+  .ptrack{height:9px;border-radius:999px;background:var(--tint);overflow:hidden;margin:8px 0 6px}
+  .ptrack > span{display:block;height:100%;background:linear-gradient(90deg,var(--sage),var(--green));width:0;transition:width .9s cubic-bezier(.2,.7,.2,1)}
+  .plabel{font-size:.8rem;color:var(--soft);text-align:right;font-variant-numeric:tabular-nums}
+
+  ol.steps{list-style:none;margin:0;padding:0;position:relative}
+  ol.steps::before{content:"";position:absolute;left:23px;top:14px;bottom:14px;width:2px;background:var(--line)}
+  li.step{position:relative;display:flex;gap:16px;padding:12px 0;align-items:flex-start}
+  .ic{flex:0 0 auto;width:48px;height:48px;border-radius:50%;background:var(--surf);border:2px solid var(--line);display:flex;align-items:center;justify-content:center;font-size:1.3rem;z-index:1;transition:all .3s}
+  .st-body{padding-top:5px}
+  .st-title{font-weight:700;font-size:1.02rem}
+  .st-desc{font-size:.9rem;color:var(--soft);margin-top:2px}
+  .st-tag{display:inline-block;font-size:10.5px;font-family:ui-monospace,monospace;letter-spacing:.05em;text-transform:uppercase;margin-top:6px;padding:2px 9px;border-radius:999px}
+
+  li.done .ic{background:var(--sage);border-color:var(--sage);color:#fff}
+  li.done .st-tag{background:var(--tint);color:var(--green-d)}
+  li.current .ic{background:var(--green);border-color:var(--green);color:#fff;box-shadow:0 0 0 5px var(--tint)}
+  li.current .st-title{color:var(--green)}
+  li.current .st-tag{background:var(--amber);color:#fff}
+  li.upcoming{opacity:.55}
+  li.upcoming .st-tag{background:var(--line);color:var(--soft)}
+
+  .help{margin-top:26px;background:var(--tint);border-radius:14px;padding:18px 20px;text-align:center;font-size:.92rem;color:var(--green-d)}
+  .help b{color:var(--green)}
+  footer{text-align:center;color:var(--faint);font-size:.75rem;margin-top:26px}
+  [data-en]{display:none}
+  body.en [data-es]{display:none} body.en [data-en]{display:revert}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <span class="brand">🧬 NURA&nbsp;Cells</span>
+    <h1 id="hello">Tu experiencia NURA</h1>
+    <p class="sub"><span data-es>Sigue tu avance en tiempo real. Nosotros nos encargamos de todo.</span><span data-en>Follow your journey in real time. We take care of everything.</span></p>
+    <div class="lang"><button type="button" class="on" onclick="setLang('es')">Español</button><button type="button" onclick="setLang('en')">English</button></div>
+  </header>
+
+  <div class="progress">
+    <div class="ptrack"><span id="pfill"></span></div>
+    <div class="plabel"><span id="pnum">0</span>/6 <span data-es>etapas</span><span data-en>steps</span></div>
+  </div>
+
+  <ol class="steps" id="steps">
+    <li class="step" data-i="1"><div class="ic">🎉</div><div class="st-body"><div class="st-title"><span data-es>Pago confirmado</span><span data-en>Payment confirmed</span></div><div class="st-desc"><span data-es>¡Tu lugar ya está apartado! Bienvenido a la comunidad NURA.</span><span data-en>Your spot is reserved! Welcome to the NURA community.</span></div><span class="st-tag">1</span></div></li>
+    <li class="step" data-i="2"><div class="ic">🗓️</div><div class="st-body"><div class="st-title"><span data-es>Agenda y logística</span><span data-en>Schedule &amp; logistics</span></div><div class="st-desc"><span data-es>Preparamos tus vuelos, hospedaje y chofer. Recibirás tu itinerario.</span><span data-en>We arrange your flights, lodging and driver. You'll get your itinerary.</span></div><span class="st-tag">2</span></div></li>
+    <li class="step" data-i="3"><div class="ic">🛬</div><div class="st-body"><div class="st-title"><span data-es>Tu llegada</span><span data-en>Your arrival</span></div><div class="st-desc"><span data-es>Tu chofer NURA te espera en el aeropuerto y te acompaña.</span><span data-en>Your NURA driver meets you at the airport.</span></div><span class="st-tag">3</span></div></li>
+    <li class="step" data-i="4"><div class="ic">💉</div><div class="st-body"><div class="st-title"><span data-es>Tu tratamiento</span><span data-en>Your treatment</span></div><div class="st-desc"><span data-es>El gran día, con nuestro equipo médico y el respaldo de CRYOVIDA.</span><span data-en>The big day, with our medical team and CRYOVIDA.</span></div><span class="st-tag">4</span></div></li>
+    <li class="step" data-i="5"><div class="ic">🏡</div><div class="st-body"><div class="st-title"><span data-es>Regreso a casa</span><span data-en>Back home</span></div><div class="st-desc"><span data-es>De vuelta, sintiéndote mejor que nunca y sin esfuerzo.</span><span data-en>Home again, feeling better than ever.</span></div><span class="st-tag">5</span></div></li>
+    <li class="step" data-i="6"><div class="ic">🤍</div><div class="st-body"><div class="st-title"><span data-es>Seguimiento</span><span data-en>Follow-up</span></div><div class="st-desc"><span data-es>Seguimos contigo: control clínico y tu bienestar a largo plazo.</span><span data-en>We stay with you: clinical follow-up and long-term wellness.</span></div><span class="st-tag">6</span></div></li>
+  </ol>
+
+  <div class="help"><span data-es>¿Dudas? Tu coordinador(a) NURA está para ayudarte en <b id="wa">WhatsApp</b>.</span><span data-en>Questions? Your NURA coordinator is here to help on <b>WhatsApp</b>.</span></div>
+  <footer>NURA Beauty SPA · NURA Cells — Potenciado por CRYOVIDA · ¡Vive la experiencia NURA!</footer>
+</div>
+
+<script>
+  function qp(k){ return new URLSearchParams(location.search).get(k); }
+  function setLang(l){document.body.classList.toggle('en',l==='en');document.querySelectorAll('.lang button').forEach(b=>b.classList.remove('on'));if(window.event)event.target.classList.add('on');document.documentElement.lang=l;}
+  (function(){
+    var fase = parseInt(qp('fase')||'1',10); if(isNaN(fase)||fase<1) fase=1; if(fase>6) fase=6;
+    var nombre = qp('nombre');
+    if(nombre){ document.getElementById('hello').textContent = 'Hola, '+nombre+' 👋'; }
+    var steps=[].slice.call(document.querySelectorAll('li.step'));
+    steps.forEach(function(li){
+      var i=parseInt(li.dataset.i,10);
+      var tag=li.querySelector('.st-tag');
+      if(i<fase){ li.classList.add('done'); tag.textContent='✓'; }
+      else if(i===fase){ li.classList.add('current'); tag.textContent = document.body.classList.contains('en')?'In progress':'En curso'; }
+      else { li.classList.add('upcoming'); }
+    });
+    document.getElementById('pnum').textContent=fase;
+    document.getElementById('pfill').style.width=Math.round(fase/6*100)+'%';
+    if(qp('lang')==='en') setLang('en');
+  })();
+</script>
+</body>
+</html>
