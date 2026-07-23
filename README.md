@@ -31,5 +31,12 @@ Mientras no se configure, el formulario funciona en modo demo (muestra el envío
 ## Privacidad
 Estos formularios **no almacenan datos**: solo los reenvían al CRM. No incluyen datos de pacientes. El expediente clínico vive de forma interna en Google Drive de NURA.
 
+## Licencia
+Copyright (C) 2026 NURA Cells.
+
+Este proyecto está licenciado bajo la **GNU Affero General Public License v3.0 o posterior (AGPL-3.0-or-later)** — ver el archivo [`LICENSE`](LICENSE).
+
+Puedes usar, estudiar y modificar el código, pero **cualquier versión distribuida o desplegada (incluso como servicio web) debe liberar su código fuente bajo la misma licencia**. Se distribuye sin garantía.
+
 ---
 Parte del *Sistema Automatizado NURA* · Guadalajara, México · ¡Vive la experiencia NURA!
