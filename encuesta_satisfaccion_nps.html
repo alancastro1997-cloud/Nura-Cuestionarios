@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NURA Cells · Encuesta de satisfacción / Satisfaction survey</title>
+<style>
+  :root{--jade:#0F766E;--jade-d:#0A4A44;--tint:#E2F0EC;--ink:#14231F;--soft:#4B5A54;--line:#D8E2DD;--bg:#F4F7F5;--surf:#fff;--warm:#AE6635}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,"Segoe UI",system-ui,sans-serif;line-height:1.55}
+  .wrap{max-width:640px;margin:0 auto;padding:28px 20px 60px}
+  header{text-align:center;margin-bottom:22px}
+  .logo{display:inline-flex;align-items:center;gap:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;font-size:13px;color:var(--jade)}
+  h1{font-family:Georgia,"Palatino Linotype",serif;font-size:1.6rem;margin:14px 0 6px}
+  .sub{color:var(--soft);font-size:.95rem}
+  .lang{display:flex;gap:6px;justify-content:center;margin-top:14px}
+  .lang button{border:1px solid var(--line);background:var(--surf);color:var(--soft);padding:5px 14px;border-radius:999px;font-size:12px;cursor:pointer}
+  .lang button.on{background:var(--jade);color:#fff;border-color:var(--jade)}
+  form{background:var(--surf);border:1px solid var(--line);border-radius:14px;padding:24px;margin-top:18px}
+  label{display:block;font-size:.9rem;font-weight:600;margin:20px 0 8px}
+  label:first-child{margin-top:0}
+  .nps{display:flex;flex-wrap:wrap;gap:6px}
+  .nps input{position:absolute;opacity:0}
+  .nps label{margin:0;flex:1;min-width:36px;text-align:center;border:1px solid var(--line);border-radius:8px;padding:10px 0;cursor:pointer;font-weight:600;background:var(--bg)}
+  .nps input:checked+label{background:var(--jade);color:#fff;border-color:var(--jade)}
+  .npsends{display:flex;justify-content:space-between;font-size:.72rem;color:var(--soft);margin-top:6px}
+  .stars{display:flex;gap:8px;font-size:1.6rem;cursor:pointer}
+  .stars span{color:var(--line)}
+  .stars span.on{color:#E0A93B}
+  textarea,input[type=text]{width:100%;padding:11px 13px;border:1px solid var(--line);border-radius:9px;font:inherit;background:var(--bg);color:var(--ink)}
+  textarea{min-height:80px;resize:vertical}
+  .chk{display:flex;gap:10px;align-items:flex-start;font-weight:400;font-size:.9rem;margin-top:16px}
+  .chk input{width:auto;margin-top:3px}
+  button.submit{margin-top:24px;width:100%;background:var(--jade);color:#fff;border:0;padding:14px;border-radius:10px;font-size:1rem;font-weight:600;cursor:pointer}
+  button.submit:hover{background:var(--jade-d)}
+  .ok{display:none;text-align:center;padding:30px;background:var(--tint);border-radius:14px;margin-top:20px}
+  .ok h2{font-family:Georgia,serif;color:var(--jade-d);margin:0 0 8px}
+  footer{text-align:center;color:var(--soft);font-size:.75rem;margin-top:24px}
+  [data-en]{display:none}
+  body.en [data-es]{display:none} body.en [data-en]{display:revert}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <span class="logo">🧬 NURA&nbsp;Cells</span>
+    <h1><span data-es>¿Cómo fue tu experiencia?</span><span data-en>How was your experience?</span></h1>
+    <p class="sub"><span data-es>Tu opinión nos ayuda a mejorar. Toma 1 minuto.</span><span data-en>Your feedback helps us improve. Takes 1 minute.</span></p>
+    <div class="lang"><button type="button" class="on" onclick="setLang('es')">Español</button><button type="button" onclick="setLang('en')">English</button></div>
+  </header>
+
+  <form id="f">
+    <label><span data-es>¿Qué tan probable es que nos recomiendes a un amigo o familiar? (0–10)</span><span data-en>How likely are you to recommend us to a friend or family member? (0–10)</span></label>
+    <div class="nps" id="nps"></div>
+    <div class="npsends"><span data-es>Nada probable</span><span data-en>Not likely</span><span data-es>Muy probable</span><span data-en>Very likely</span></div>
+
+    <label><span data-es>Califica tu experiencia general</span><span data-en>Rate your overall experience</span></label>
+    <div class="stars" id="stars"><span data-v="1">★</span><span data-v="2">★</span><span data-v="3">★</span><span data-v="4">★</span><span data-v="5">★</span></div>
+    <input type="hidden" name="estrellas" id="estrellas">
+
+    <label><span data-es>¿Qué fue lo mejor?</span><span data-en>What was the best part?</span></label>
+    <textarea name="lo_mejor"></textarea>
+
+    <label><span data-es>¿Qué podríamos mejorar?</span><span data-en>What could we improve?</span></label>
+    <textarea name="mejorar"></textarea>
+
+    <label class="chk"><input type="checkbox" name="permiso_testimonio" value="si"><span data-es>Autorizo a NURA a usar mi opinión como testimonio.</span><span data-en>I authorize NURA to use my feedback as a testimonial.</span></label>
+
+    <button type="submit" class="submit"><span data-es>Enviar encuesta</span><span data-en>Submit survey</span></button>
+  </form>
+
+  <div class="ok" id="ok"><h2><span data-es>¡Gracias por tu tiempo! 🤍</span><span data-en>Thank you! 🤍</span></h2><p><span data-es>Tu opinión es muy valiosa para el equipo NURA.</span><span data-en>Your feedback means a lot to the NURA team.</span></p></div>
+  <footer>NURA Cells · Guadalajara, México</footer>
+</div>
+
+<script>
+  // ====== CONFIG: URL del Inbound Webhook de GHL (o Apps Script) ======
+  const WEBHOOK_URL = "PEGAR_URL_WEBHOOK_GHL_AQUI";
+  // ===================================================================
+  const nps=document.getElementById('nps');
+  for(let i=0;i<=10;i++){nps.insertAdjacentHTML('beforeend',`<input type="radio" name="nps" id="n${i}" value="${i}"><label for="n${i}">${i}</label>`);}
+  const stars=document.getElementById('stars');
+  stars.addEventListener('click',e=>{const v=e.target.dataset.v;if(!v)return;document.getElementById('estrellas').value=v;[...stars.children].forEach(s=>s.classList.toggle('on',s.dataset.v<=v));});
+  function setLang(l){document.body.classList.toggle('en',l==='en');document.querySelectorAll('.lang button').forEach(b=>b.classList.remove('on'));event.target.classList.add('on');document.documentElement.lang=l;}
+  document.getElementById('f').addEventListener('submit',async function(e){
+    e.preventDefault();
+    const data=Object.fromEntries(new FormData(e.target).entries());
+    data.origen_formulario='nps'; data.fecha=new Date().toISOString();
+    try{
+      if(WEBHOOK_URL.startsWith('http')){await fetch(WEBHOOK_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});}
+      else{console.log('DEMO (sin webhook):',data);}
+      e.target.style.display='none';document.getElementById('ok').style.display='block';window.scrollTo({top:0,behavior:'smooth'});
+    }catch(err){alert('Error al enviar / Submit error.');}
+  });
+</script>
+</body>
+</html>

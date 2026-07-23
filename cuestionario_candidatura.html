@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NURA Cells · ¿Eres candidato? / Are you a candidate?</title>
+<style>
+  :root{--jade:#0F766E;--jade-d:#0A4A44;--tint:#E2F0EC;--ink:#14231F;--soft:#4B5A54;--line:#D8E2DD;--bg:#F4F7F5;--surf:#fff;--warm:#AE6635;}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,"Segoe UI",system-ui,sans-serif;line-height:1.55}
+  .wrap{max-width:640px;margin:0 auto;padding:28px 20px 60px}
+  header{text-align:center;margin-bottom:26px}
+  .logo{display:inline-flex;align-items:center;gap:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;font-size:13px;color:var(--jade)}
+  h1{font-family:Georgia,"Palatino Linotype",serif;font-size:1.7rem;margin:14px 0 6px}
+  .sub{color:var(--soft);font-size:.95rem}
+  .lang{display:flex;gap:6px;justify-content:center;margin:16px 0 0}
+  .lang button{border:1px solid var(--line);background:var(--surf);color:var(--soft);padding:5px 14px;border-radius:999px;font-size:12px;cursor:pointer}
+  .lang button.on{background:var(--jade);color:#fff;border-color:var(--jade)}
+  form{background:var(--surf);border:1px solid var(--line);border-radius:14px;padding:24px;margin-top:20px}
+  label{display:block;font-size:.86rem;font-weight:600;margin:16px 0 6px}
+  label:first-child{margin-top:0}
+  input,select,textarea{width:100%;padding:11px 13px;border:1px solid var(--line);border-radius:9px;font:inherit;background:var(--bg);color:var(--ink)}
+  input:focus,select:focus,textarea:focus{outline:2px solid var(--jade);outline-offset:1px;border-color:var(--jade)}
+  textarea{min-height:88px;resize:vertical}
+  .req{color:var(--warm)}
+  button.submit{margin-top:22px;width:100%;background:var(--jade);color:#fff;border:0;padding:14px;border-radius:10px;font-size:1rem;font-weight:600;cursor:pointer}
+  button.submit:hover{background:var(--jade-d)}
+  button.submit:disabled{opacity:.6;cursor:default}
+  .ok{display:none;text-align:center;padding:30px;background:var(--tint);border-radius:14px;margin-top:20px}
+  .ok h2{font-family:Georgia,serif;color:var(--jade-d);margin:0 0 8px}
+  .hint{font-size:.78rem;color:var(--soft);margin-top:6px}
+  footer{text-align:center;color:var(--soft);font-size:.75rem;margin-top:24px}
+  [data-en]{display:none}
+  body.en [data-es]{display:none}
+  body.en [data-en]{display:revert}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <span class="logo">🧬 NURA&nbsp;Cells</span>
+    <h1><span data-es>¿Eres candidato/a?</span><span data-en>Are you a candidate?</span></h1>
+    <p class="sub"><span data-es>Cuéntanos sobre ti y te contactamos para tu evaluación.</span><span data-en>Tell us about you and we'll reach out for your evaluation.</span></p>
+    <div class="lang">
+      <button type="button" class="on" onclick="setLang('es')">Español</button>
+      <button type="button" onclick="setLang('en')">English</button>
+    </div>
+  </header>
+
+  <form id="f">
+    <label><span data-es>Nombre completo</span><span data-en>Full name</span> <span class="req">*</span></label>
+    <input name="paciente_nombre" required>
+
+    <label>Email <span class="req">*</span></label>
+    <input name="email" type="email" required>
+
+    <label>WhatsApp <span class="req">*</span></label>
+    <input name="telefono" required placeholder="+52 / +1 ...">
+
+    <label><span data-es>País y ciudad</span><span data-en>Country and city</span></label>
+    <input name="pais_origen">
+
+    <label><span data-es>Idioma de preferencia</span><span data-en>Preferred language</span></label>
+    <select name="idioma"><option value="ES">Español</option><option value="EN">English</option></select>
+
+    <label><span data-es>¿Qué te interesa?</span><span data-en>What are you interested in?</span> <span class="req">*</span></label>
+    <select name="dx_interes" required>
+      <option value="" disabled selected data-es>Selecciona...</option>
+      <option value="" disabled data-en>Select...</option>
+      <option value="Dolor cronico"><span>Dolor crónico / articular · Chronic / joint pain</span></option>
+      <option value="Rejuvenecimiento">Rejuvenecimiento / Anti-aging</option>
+      <option value="Otro">Otro / Other</option>
+    </select>
+
+    <label><span data-es>Edad</span><span data-en>Age</span></label>
+    <input name="edad" type="number" min="18" max="99">
+
+    <label><span data-es>Describe tu padecimiento u objetivo</span><span data-en>Describe your condition or goal</span></label>
+    <textarea name="descripcion"></textarea>
+
+    <label><span data-es>¿Cómo nos conociste?</span><span data-en>How did you hear about us?</span></label>
+    <input name="fuente">
+
+    <button type="submit" class="submit" id="sb"><span data-es>Enviar</span><span data-en>Submit</span></button>
+    <p class="hint" data-es>Al enviar aceptas ser contactado por el equipo NURA. Tus datos se tratan de forma confidencial.</p>
+    <p class="hint" data-en>By submitting you agree to be contacted by the NURA team. Your data is treated confidentially.</p>
+  </form>
+
+  <div class="ok" id="ok">
+    <h2><span data-es>¡Gracias!</span><span data-en>Thank you!</span></h2>
+    <p><span data-es>Recibimos tu información. Un coordinador NURA te contactará muy pronto.</span><span data-en>We received your info. A NURA coordinator will contact you very soon.</span></p>
+  </div>
+
+  <footer>NURA Cells · Guadalajara, México · ¡Vive la experiencia NURA!</footer>
+</div>
+
+<script>
+  // ====== CONFIG ======
+  // Pega aquí la URL del "Inbound Webhook" de tu Workflow en GHL (o del Apps Script).
+  // Cómo obtenerla: GHL → Automation → Workflow nuevo → Trigger "Inbound Webhook" → copiar URL.
+  const WEBHOOK_URL = "PEGAR_URL_WEBHOOK_GHL_AQUI";
+  // ====================
+  function setLang(l){document.body.classList.toggle('en',l==='en');document.querySelectorAll('.lang button').forEach(b=>b.classList.remove('on'));event.target.classList.add('on');document.documentElement.lang=l;}
+  document.getElementById('f').addEventListener('submit',async function(e){
+    e.preventDefault();
+    const btn=document.getElementById('sb'); btn.disabled=true;
+    const data=Object.fromEntries(new FormData(e.target).entries());
+    data.tag_audiencia = data.dx_interes && data.dx_interes.indexOf('Dolor')===0 ? 'dolor-cronico' : (data.dx_interes==='Rejuvenecimiento'?'anti-aging':'otro');
+    data.origen_formulario='candidatura'; data.fecha=new Date().toISOString();
+    try{
+      if(WEBHOOK_URL.startsWith('http')){
+        await fetch(WEBHOOK_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});
+      } else { console.log('DEMO (sin webhook):',data); }
+      e.target.style.display='none'; document.getElementById('ok').style.display='block';
+      window.scrollTo({top:0,behavior:'smooth'});
+    }catch(err){ btn.disabled=false; alert('Error al enviar / Submit error. Intenta de nuevo.'); }
+  });
+</script>
+</body>
+</html>

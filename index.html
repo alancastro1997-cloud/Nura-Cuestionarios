@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NURA Cells · Cuestionarios</title>
+<style>
+  :root{--jade:#0F766E;--jade-d:#0A4A44;--tint:#E2F0EC;--ink:#14231F;--soft:#4B5A54;--line:#D8E2DD;--bg:#F4F7F5;--surf:#fff}
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:-apple-system,"Segoe UI",system-ui,sans-serif;line-height:1.55;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px}
+  .card{max-width:560px;width:100%;text-align:center}
+  .logo{display:inline-flex;align-items:center;gap:10px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;font-size:13px;color:var(--jade)}
+  h1{font-family:Georgia,"Palatino Linotype",serif;font-size:2rem;margin:18px 0 8px}
+  p.sub{color:var(--soft);margin:0 0 28px}
+  .links{display:grid;gap:14px}
+  a.tile{display:block;background:var(--surf);border:1px solid var(--line);border-top:3px solid var(--jade);border-radius:14px;padding:22px;text-decoration:none;color:var(--ink);transition:transform .15s,box-shadow .15s}
+  a.tile:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(15,118,110,.12)}
+  a.tile h2{font-family:Georgia,serif;font-size:1.2rem;margin:0 0 4px;color:var(--jade-d)}
+  a.tile span{color:var(--soft);font-size:.92rem}
+  footer{margin-top:28px;color:var(--soft);font-size:.78rem}
+</style>
+</head>
+<body>
+  <div class="card">
+    <span class="logo">🧬 NURA&nbsp;Cells</span>
+    <h1>Cuestionarios</h1>
+    <p class="sub">Elige el formulario que necesitas.</p>
+    <div class="links">
+      <a class="tile" href="cuestionario_candidatura.html">
+        <h2>¿Eres candidato? / Are you a candidate?</h2>
+        <span>Formulario de evaluación para nuevos pacientes.</span>
+      </a>
+      <a class="tile" href="encuesta_satisfaccion_nps.html">
+        <h2>Encuesta de satisfacción / Satisfaction survey</h2>
+        <span>Comparte tu experiencia después del tratamiento.</span>
+      </a>
+    </div>
+    <footer>NURA Cells · Guadalajara, México · ¡Vive la experiencia NURA!</footer>
+  </div>
+</body>
+</html>
