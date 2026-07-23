@@ -72,12 +72,12 @@
     <li class="step" data-i="1"><div class="ic">🎉</div><div class="st-body"><div class="st-title"><span data-es>Pago confirmado</span><span data-en>Payment confirmed</span></div><div class="st-desc"><span data-es>¡Tu lugar ya está apartado! Bienvenido a la comunidad NURA.</span><span data-en>Your spot is reserved! Welcome to the NURA community.</span></div><span class="st-tag">1</span></div></li>
     <li class="step" data-i="2"><div class="ic">🗓️</div><div class="st-body"><div class="st-title"><span data-es>Agenda y logística</span><span data-en>Schedule &amp; logistics</span></div><div class="st-desc"><span data-es>Preparamos tus vuelos, hospedaje y chofer. Recibirás tu itinerario.</span><span data-en>We arrange your flights, lodging and driver. You'll get your itinerary.</span></div><span class="st-tag">2</span></div></li>
     <li class="step" data-i="3"><div class="ic">🛬</div><div class="st-body"><div class="st-title"><span data-es>Tu llegada</span><span data-en>Your arrival</span></div><div class="st-desc"><span data-es>Tu chofer NURA te espera en el aeropuerto y te acompaña.</span><span data-en>Your NURA driver meets you at the airport.</span></div><span class="st-tag">3</span></div></li>
-    <li class="step" data-i="4"><div class="ic">💉</div><div class="st-body"><div class="st-title"><span data-es>Tu tratamiento</span><span data-en>Your treatment</span></div><div class="st-desc"><span data-es>El gran día, con nuestro equipo médico y el respaldo de CRYOVIDA.</span><span data-en>The big day, with our medical team and CRYOVIDA.</span></div><span class="st-tag">4</span></div></li>
+    <li class="step" data-i="4"><div class="ic">💉</div><div class="st-body"><div class="st-title"><span data-es>Tu tratamiento</span><span data-en>Your treatment</span></div><div class="st-desc"><span data-es>El día de tu tratamiento, con nuestro equipo médico y el respaldo de CRYOVIDA.</span><span data-en>The day of your treatment, with our medical team and CRYOVIDA.</span></div><span class="st-tag">4</span></div></li>
     <li class="step" data-i="5"><div class="ic">🏡</div><div class="st-body"><div class="st-title"><span data-es>Regreso a casa</span><span data-en>Back home</span></div><div class="st-desc"><span data-es>De vuelta, sintiéndote mejor que nunca y sin esfuerzo.</span><span data-en>Home again, feeling better than ever.</span></div><span class="st-tag">5</span></div></li>
     <li class="step" data-i="6"><div class="ic">🤍</div><div class="st-body"><div class="st-title"><span data-es>Seguimiento</span><span data-en>Follow-up</span></div><div class="st-desc"><span data-es>Seguimos contigo: control clínico y tu bienestar a largo plazo.</span><span data-en>We stay with you: clinical follow-up and long-term wellness.</span></div><span class="st-tag">6</span></div></li>
   </ol>
 
-  <div class="help"><span data-es>¿Dudas? Tu coordinador(a) NURA está para ayudarte en <b id="wa">WhatsApp</b>.</span><span data-en>Questions? Your NURA coordinator is here to help on <b>WhatsApp</b>.</span></div>
+  <div class="help"><span data-es>Si te surge cualquier duda, tu coordinador(a) NURA está para ayudarte por <b id="wa">WhatsApp</b>.</span><span data-en>Should any question arise, your NURA coordinator is here to help on <b>WhatsApp</b>.</span></div>
   <footer>NURA Beauty SPA · NURA Cells — Potenciado por CRYOVIDA · ¡Vive la experiencia NURA!</footer>
 </div>
 
@@ -87,7 +87,7 @@
   (function(){
     var fase = parseInt(qp('fase')||'1',10); if(isNaN(fase)||fase<1) fase=1; if(fase>6) fase=6;
     var nombre = qp('nombre');
-    if(nombre){ document.getElementById('hello').textContent = 'Hola, '+nombre+' 👋'; }
+    if(nombre){ document.getElementById('hello').textContent = 'Hola, '+nombre; }
     var steps=[].slice.call(document.querySelectorAll('li.step'));
     steps.forEach(function(li){
       var i=parseInt(li.dataset.i,10);
