@@ -31,7 +31,12 @@
   textarea,input[type=text]{width:100%;padding:11px 13px;border:1px solid var(--line);border-radius:9px;font:inherit;background:var(--bg);color:var(--ink)}
   textarea{min-height:80px;resize:vertical}
   .chk{display:flex;gap:10px;align-items:flex-start;font-weight:400;font-size:.9rem;margin-top:16px}
-  .chk input{width:auto;margin-top:3px}
+  .chk input{width:auto;margin-top:3px;min-width:20px;min-height:20px;accent-color:var(--jade)}
+  /* ---- Aviso de Privacidad Corto (LFPDPPP) ---- */
+  .aviso{margin-top:22px;padding:13px 15px;border:1px solid var(--line);border-left:4px solid var(--jade);border-radius:9px;background:var(--tint);font-size:.75rem;color:#3C4A3F}
+  .aviso p{margin:0}
+  .aviso strong{color:var(--jade-d)}
+  .aviso a{color:var(--jade)}
   button.submit{margin-top:24px;width:100%;background:var(--jade);color:#fff;border:0;padding:14px;border-radius:10px;font-size:1rem;font-weight:600;cursor:pointer}
   button.submit:hover{background:var(--jade-d)}
   .ok{display:none;text-align:center;padding:30px;background:var(--tint);border-radius:14px;margin-top:20px}
@@ -47,7 +52,7 @@
     <span class="logo">🧬 NURA&nbsp;Cells</span>
     <h1><span data-es>¿Cómo fue tu experiencia?</span><span data-en>How was your experience?</span></h1>
     <p class="sub"><span data-es>Nos importa saber cómo te fue y contribuyes a nuestra mejora para la comunidad NURA. Toma un minuto.</span><span data-en>It matters to us to know how it went, and it helps us keep improving for the NURA community. Takes one minute.</span></p>
-    <div class="lang"><button type="button" class="on" onclick="setLang('es')">Español</button><button type="button" onclick="setLang('en')">English</button></div>
+    <div class="lang"><button type="button" class="on" onclick="setLang('es',this)">Español</button><button type="button" onclick="setLang('en',this)">English</button></div>
   </header>
 
   <form id="f">
@@ -65,7 +70,21 @@
     <label><span data-es>¿Qué podríamos mejorar?</span><span data-en>What could we improve?</span></label>
     <textarea name="mejorar"></textarea>
 
-    <label class="chk"><input type="checkbox" name="permiso_testimonio" value="si"><span data-es>Autorizo a NURA a usar mi opinión como testimonio.</span><span data-en>I authorize NURA to use my feedback as a testimonial.</span></label>
+    <label class="chk"><input type="checkbox" name="permiso_testimonio" value="si"><span data-es>Autorizo a NURA a usar mi opinión como testimonio. Es opcional; si no la marco, mis comentarios se usan solo para mejorar el servicio.</span><span data-en>I authorize NURA to use my feedback as a testimonial. This is optional; if I leave it unticked, my comments will be used only to improve the service.</span></label>
+
+    <!--
+      AVISO DE PRIVACIDAD CORTO. Texto fiel a
+      `EXPEDIENTE CLINICO/NURA_Aviso_de_privacidad_corto.docx`, misma fuente que
+      `nura-beauty-spa/src/data/legal.ts` → `avisoCorto`.
+      Aquí va el CORTO y no el simplificado porque esta encuesta no recaba datos
+      sensibles ni de identificación: solo opinión y una autorización opcional de
+      testimonio. NO editar el fondo del texto sin revisión jurídica.
+      PENDIENTE: al existir dominio propio, ligar el Aviso Integral.
+    -->
+    <div class="aviso">
+      <p data-es><strong>NURA BEAUTY SPA</strong>, a través de su Responsable Sanitario, Dr. Alan Francisco Castro Villalonga (Cédula Profesional 13111347), con domicilio en Av. Naciones Unidas 5069, Col. Jardines Universidad, 45110 Zapopan, Jalisco, México, es el responsable del tratamiento y protección de sus datos personales. Puede consultar el Aviso de Privacidad Integral y ejercer sus derechos ARCO en nuestra recepción o escribiendo a <a href="mailto:consultas@nuracells.com">consultas@nuracells.com</a>.</p>
+      <p data-en><strong>NURA BEAUTY SPA</strong>, through its Health Officer, Dr. Alan Francisco Castro Villalonga (Professional License No. 13111347), with address at Av. Naciones Unidas 5069, Col. Jardines Universidad, 45110 Zapopan, Jalisco, Mexico, is responsible for the processing and protection of your personal data. The Comprehensive Privacy Notice is available, and ARCO rights may be exercised, at our reception desk or by writing to <a href="mailto:consultas@nuracells.com">consultas@nuracells.com</a>. <em>The Spanish version is the legally binding one.</em></p>
+    </div>
 
     <button type="submit" class="submit"><span data-es>Enviar encuesta</span><span data-en>Submit survey</span></button>
   </form>
@@ -77,15 +96,22 @@
 <script>
   // ====== CONFIG: URL del Inbound Webhook de GHL (o Apps Script) ======
   const WEBHOOK_URL = "PEGAR_URL_WEBHOOK_GHL_AQUI";
+  // Versión del Aviso de Privacidad vigente al momento de la respuesta.
+  const AVISO_VERSION = "2025-10-23";
   // ===================================================================
   const nps=document.getElementById('nps');
   for(let i=0;i<=10;i++){nps.insertAdjacentHTML('beforeend',`<input type="radio" name="nps" id="n${i}" value="${i}"><label for="n${i}">${i}</label>`);}
   const stars=document.getElementById('stars');
   stars.addEventListener('click',e=>{const v=e.target.dataset.v;if(!v)return;document.getElementById('estrellas').value=v;[...stars.children].forEach(s=>s.classList.toggle('on',s.dataset.v<=v));});
-  function setLang(l){document.body.classList.toggle('en',l==='en');document.querySelectorAll('.lang button').forEach(b=>b.classList.remove('on'));event.target.classList.add('on');document.documentElement.lang=l;}
+  function setLang(l,btn){document.body.classList.toggle('en',l==='en');document.querySelectorAll('.lang button').forEach(b=>b.classList.remove('on'));btn.classList.add('on');document.documentElement.lang=l;}
   document.getElementById('f').addEventListener('submit',async function(e){
     e.preventDefault();
-    const data=Object.fromEntries(new FormData(e.target).entries());
+    const form=e.target;
+    const data=Object.fromEntries(new FormData(form).entries());
+    // Una casilla sin marcar no viaja en FormData. Se normaliza para que
+    // "no autorizó el testimonio" quede registrado de forma explícita.
+    data.permiso_testimonio = form.permiso_testimonio.checked ? 'si' : 'no';
+    data.aviso_privacidad_version = AVISO_VERSION;
     data.origen_formulario='nps'; data.fecha=new Date().toISOString();
     try{
       if(WEBHOOK_URL.startsWith('http')){await fetch(WEBHOOK_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});}

@@ -1,0 +1,1260 @@
+<!DOCTYPE html>
+<!-- NURA Cells - Cuestionarios | Copyright (C) 2026 NURA Cells | SPDX-License-Identifier: AGPL-3.0-or-later -->
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<!-- Ningún recurso de terceros sale de este archivo —sin fuentes web, sin CDN,
+     sin analítica— y esto lo remata: la referencia del paciente no puede
+     filtrarse en un encabezado Referer hacia nadie. -->
+<meta name="referrer" content="no-referrer">
+<title>NURA Cells · Seguimiento de resultados / Follow-up</title>
+<style>
+  /* Paleta de marca NURA. Los hex NO se negocian: vienen de la carta de
+     bienvenida y están auditados para contraste en
+     IA/nura-beauty-spa/src/styles/global.css (líneas 29-42).
+
+     REGLA QUE NO SE ROMPE: #E8963C y #F2C14E JAMÁS como color de texto
+     (2.37:1 y 1.71:1 sobre blanco). El ámbar solo es fondo, y su texto va en
+     #262626 (6.38:1). Texto pequeño únicamente en #444444 (9.74) o #2F5233
+     (8.84). #5B8C5A (3.93) solo iconos, bordes y texto de 24px o más. */
+  :root{
+    --jade:#2F5233; --jade-d:#223B27; --sage:#5B8C5A; --tint:#EFF7EC;
+    --ink:#1B2A1E; --soft:#444444; --line:#D9E4D6; --bg:#F6F9F4; --surf:#fff;
+    /* #8C4310 sobre blanco da 6.1:1. El #B25F13 que usa hoy
+       cuestionario_candidatura.html da 4.63 — pasa AA por trece centésimas y no
+       está en la tabla auditada. Aquí se oscurece hasta un margen que no dependa
+       de redondeos. */
+    --warm:#E8963C; --warm-ink:#262626; --danger:#8C4310;
+    --radius:12px;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+       font-family:-apple-system,"Segoe UI",system-ui,sans-serif;line-height:1.55}
+  .wrap{max-width:640px;margin:0 auto;padding:24px 18px 60px}
+
+  header{text-align:center;margin-bottom:18px}
+  .logo{display:inline-flex;align-items:center;gap:9px;font-weight:700;letter-spacing:.14em;
+        text-transform:uppercase;font-size:12px;color:var(--jade)}
+  .lang{display:flex;gap:6px;justify-content:center;margin-top:14px}
+  .lang button{border:1px solid var(--line);background:var(--surf);color:var(--soft);
+               padding:6px 15px;border-radius:999px;font-size:12px;cursor:pointer;min-height:32px}
+  .lang button.on{background:var(--jade);color:#fff;border-color:var(--jade)}
+  .lang button:focus-visible{outline:2px solid var(--jade);outline-offset:2px}
+
+  /* ---- Barra de progreso ---- */
+  .prog{margin:18px 0 14px}
+  .prog-track{display:flex;align-items:center;gap:5px}
+  .prog-node{width:9px;height:9px;border-radius:50%;background:var(--line);flex:0 0 auto;
+             transition:background .25s}
+  .prog-node.hecho{background:var(--sage)}
+  .prog-node.actual{width:12px;height:12px;background:var(--surf);border:2px solid var(--jade);
+                    box-shadow:0 0 0 4px var(--tint)}
+  .prog-line{flex:1 1 auto;height:2px;background:var(--line);min-width:6px}
+  .prog-line.hecho{background:var(--sage)}
+  .prog-cap{margin-top:9px;font-size:11px;letter-spacing:.09em;text-transform:uppercase;
+            color:var(--soft);text-align:center}
+
+  /* ---- Tarjeta y campos ---- */
+  .card{background:var(--surf);border:1px solid var(--line);border-radius:var(--radius);padding:22px}
+  h1{font-family:Georgia,"Palatino Linotype",serif;font-size:1.45rem;margin:0 0 4px;color:var(--jade-d)}
+  .nota{color:var(--soft);font-size:.9rem;margin:0 0 18px}
+  .campo{margin-bottom:26px}
+  .campo:last-of-type{margin-bottom:8px}
+  .preg{display:block;font-size:.95rem;font-weight:600;margin-bottom:4px}
+  .ayuda{font-size:.78rem;color:var(--soft);margin-bottom:9px}
+  .marca-req{color:var(--danger);font-weight:700}
+
+  /* ---- Escala numérica ---- */
+  .escala{display:grid;gap:6px}
+  .escala.g11{grid-template-columns:repeat(6,1fr)}
+  .escala.g5{grid-template-columns:repeat(5,1fr)}
+  .esc-btn{min-height:46px;border:1px solid var(--line);background:var(--bg);color:var(--ink);
+           border-radius:9px;font:inherit;font-weight:600;cursor:pointer;transition:all .12s}
+  .esc-btn:hover{border-color:var(--jade)}
+  .esc-btn.on{background:var(--jade);color:#fff;border-color:var(--jade)}
+  .esc-btn:focus-visible{outline:2px solid var(--jade);outline-offset:2px}
+  .extremos{display:flex;justify-content:space-between;font-size:.74rem;color:var(--soft);margin-top:7px}
+
+  /* ---- Estrellas ---- */
+  .estrellas{display:flex;gap:8px}
+  .est-btn{min-width:44px;min-height:44px;border:1px solid var(--line);background:var(--bg);
+           border-radius:9px;font-size:1.4rem;line-height:1;color:var(--line);cursor:pointer}
+  /* La estrella llena va en VERDE PROFUNDO y no en ámbar. El ámbar sobre el
+     tinte da 2.2:1 y un glifo ★ es texto, no decoración: es el indicador del
+     estado seleccionado. La convención dorada no vale una casilla ilegible. */
+  .est-btn.on{color:var(--jade-d);border-color:var(--jade);background:var(--tint)}
+  .est-btn:focus-visible{outline:2px solid var(--jade);outline-offset:2px}
+
+  /* ---- Deslizador ---- */
+  .desl-fila{display:flex;align-items:center;gap:12px}
+  .desl-val{font-size:1.5rem;font-weight:700;color:var(--jade);min-width:2.6em;text-align:right}
+  input[type=range]{flex:1;accent-color:var(--jade);height:32px}
+
+  /* ---- Opciones (chips y lista) ---- */
+  .ops{display:flex;flex-wrap:wrap;gap:8px}
+  .ops.col{flex-direction:column}
+  .op-btn{border:1px solid var(--line);background:var(--bg);color:var(--ink);border-radius:999px;
+          padding:11px 17px;font:inherit;font-size:.9rem;cursor:pointer;min-height:44px;transition:all .12s}
+  .ops.col .op-btn{border-radius:10px;text-align:left;width:100%}
+  .op-btn:hover{border-color:var(--jade)}
+  .op-btn.on{background:var(--jade);color:#fff;border-color:var(--jade);font-weight:600}
+  .op-btn:focus-visible{outline:2px solid var(--jade);outline-offset:2px}
+
+  textarea,input[type=email]{width:100%;padding:12px 13px;border:1px solid var(--line);border-radius:9px;
+           font:inherit;background:var(--bg);color:var(--ink);resize:vertical}
+  textarea{min-height:96px}
+  input[type=email]{min-height:48px}
+  textarea:focus,input[type=email]:focus{outline:2px solid var(--jade);outline-offset:1px;border-color:var(--jade)}
+
+  /* ---- Error ---- */
+  .campo.mal .esc-btn,.campo.mal .op-btn,.campo.mal .est-btn,
+  .campo.mal textarea,.campo.mal input[type=email]{border-color:var(--danger)}
+  .err{color:var(--danger);font-size:.8rem;font-weight:600;margin-top:7px}
+  .err-caja{background:#FBEEE3;border:1px solid var(--warm);border-left:4px solid var(--warm);
+            color:var(--warm-ink);border-radius:9px;padding:12px 14px;font-size:.86rem;margin-bottom:18px}
+
+  /* ---- Aviso de privacidad ---- */
+  .aviso{margin-top:8px;border:1px solid var(--line);border-radius:11px;background:var(--tint);padding:14px 16px}
+  .aviso>summary{font-size:.86rem;font-weight:700;color:var(--jade);cursor:pointer;list-style:none;min-height:24px}
+  .aviso>summary::-webkit-details-marker{display:none}
+  .aviso>summary::before{content:"▸ "}
+  .aviso[open]>summary::before{content:"▾ "}
+  .aviso .cuerpo{font-size:.78rem;color:var(--soft);margin-top:12px}
+  .aviso .cuerpo p{margin:0 0 9px}
+  .aviso .cuerpo ul{margin:0 0 9px;padding-left:20px}
+  .aviso .cuerpo strong{color:var(--jade-d)}
+  .aviso .cuerpo a{color:var(--jade)}
+  .consent{margin-top:14px;padding:14px 16px;border:1px solid var(--line);border-left:4px solid var(--jade);
+           border-radius:9px;background:var(--surf)}
+  .chk{display:flex;gap:11px;align-items:flex-start;font-size:.82rem;color:var(--soft);cursor:pointer}
+  .chk+.chk{margin-top:13px;padding-top:13px;border-top:1px dashed var(--line)}
+  .chk input{flex:0 0 auto;margin:2px 0 0;min-width:22px;min-height:22px;accent-color:var(--jade)}
+
+  /* ---- Navegación ---- */
+  .nav{display:flex;justify-content:space-between;gap:12px;margin-top:26px}
+  .btn{border-radius:10px;font:inherit;font-size:.95rem;font-weight:600;cursor:pointer;
+       padding:13px 20px;min-height:48px;transition:opacity .15s}
+  .btn:focus-visible{outline:2px solid var(--jade);outline-offset:2px}
+  .btn-p{background:var(--jade);color:#fff;border:0;flex:1}
+  .btn-p:hover{background:var(--jade-d)}
+  .btn-s{background:var(--surf);color:var(--jade);border:1px solid var(--line)}
+  .btn:disabled{opacity:.55;cursor:default}
+
+  .guardado{font-size:.74rem;color:var(--soft);min-height:16px;margin-top:14px;text-align:center}
+  footer{text-align:center;color:var(--soft);font-size:.74rem;margin-top:22px}
+  .fin{text-align:center;padding:34px 24px;background:var(--tint);border-radius:var(--radius)}
+  .fin h1{margin-bottom:10px}
+
+  @media (prefers-reduced-motion: reduce){*{transition:none !important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <span class="logo">🧬 NURA&nbsp;Cells</span>
+    <div class="lang">
+      <button type="button" data-lang="es" class="on">Español</button>
+      <button type="button" data-lang="en">English</button>
+    </div>
+  </header>
+  <main id="app" aria-live="polite"></main>
+  <footer>NURA Cells · Guadalajara, México · <span id="nura-version"></span></footer>
+</div>
+
+<script>
+/* =====================================================================
+   NURA · Cuestionario de seguimiento de resultados (PROM)
+   =====================================================================
+   Lo contesta el paciente a los 30, 90 y 180 días del tratamiento. Sus
+   respuestas terminan en la hoja `Resultados` del libro de NURA, una fila por
+   evaluación, con la llave compuesta ref_paciente + momento.
+
+   EL DESTINO VIVE EN UN SOLO SITIO —`CONFIG.destino` y `enviarRespuestas()`—
+   y es deliberado. El POST a un formulario nativo de GHL no está documentado
+   oficialmente, así que hasta que la prueba del Paso 0 lo confirme hay que
+   poder cambiar de vía editando un punto y no el archivo entero.
+
+   NINGUNA DE LAS TRES VÍAS PONE UN SECRETO EN EL NAVEGADOR. La URL /exec del
+   Apps Script y el token viven solo en GHL y en Bitwarden; este archivo se
+   publica en un repositorio público y no puede saber ni una cosa ni la otra.
+   ===================================================================== */
+
+var CONFIG = {
+  /* 'apps-script'    → POST directo al /exec del Apps Script (la vía elegida)
+     'formulario-ghl' → POST al endpoint público de un formulario nativo
+     'webhook'        → POST a un Inbound Webhook de GHL (premium)
+     'demo'           → no envía nada; imprime en la consola. Es el valor de
+                        fábrica para que un archivo sin configurar NUNCA finja
+                        que envió algo. */
+  destino: 'apps-script',
+
+  /* LA VÍA ELEGIDA. El navegador manda al Apps Script, que escribe la hoja
+     `Resultados` y de ahí espeja a la ficha del contacto en GHL.
+
+     SÍ, EL TOKEN ESTÁ A LA VISTA, Y ESTÁ PENSADO. Este archivo se publica en un
+     repositorio público: cualquier secreto que lleve dentro es legible. Por eso
+     NO es el token de GHL sino uno propio, que el Apps Script CONFINA a la ruta
+     de PROMs y rechaza con 403 en cualquier otra. Con él a la vista, el peor
+     daño posible es un renglón falso en `Resultados` —el mismo riesgo que ya se
+     acepta porque el enlace del paciente es adivinable—, y nunca tocar el
+     Tracker ni el libro de ingresos. Si algún día este token sirviera para algo
+     más, la decisión entera deja de sostenerse. */
+  appsScriptUrl: 'https://script.google.com/macros/s/AKfycbxxqpuLzJ5FIKd_4JGKxUrwbOCL_X73udgg03lOzytow0iTnTmrhhgh8uUSN4bHUDWRYw/exec',
+  tokenProm:     'TCit3O1HwA0G5cMfvIUuANDHh0RSBc75hpKUj3orpdSTTnAidq',
+
+  // Vías anteriores. Se conservan porque están probadas y borrarlas no gana nada.
+  formularioGhlUrl: 'PEGAR_ENDPOINT_DEL_FORMULARIO_GHL',
+  formularioGhlId:  'PEGAR_FORM_ID_DE_GHL',
+  webhookUrl: 'PEGAR_URL_INBOUND_WEBHOOK_GHL',
+
+  /* Versión del Aviso de Privacidad que el paciente aceptó. Se guarda con la
+     respuesta porque la LFPDPPP exige poder demostrar QUÉ texto se consintió,
+     no solo que se consintió. Si el aviso cambia, cambia esta fecha. */
+  avisoVersion: '2025-10-23',
+
+  /* Marca de versión de ESTE archivo. Se pinta en el pie y sirve para lo mismo
+     que REVISION en el Apps Script: saber qué código contestó cada paciente
+     cuando GitHub Pages sirve una copia cacheada y uno se pregunta por qué la
+     corrección no surtió efecto. */
+  version: '2026-08-06a'
+};
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   HAY DOS CAPAS DE NOMBRES Y CONFUNDIRLAS ES EL ERROR CARO.
+
+   1) Lo que ESTE archivo manda son nombres de campo del FORMULARIO DE GHL, y de
+      ahí caen en campos personalizados del contacto.
+   2) Lo que llega al Apps Script son los PARES DEL WEBHOOK, que teclea WF-8 con
+      `{{contact.<clave>}}`. `val_()` los compara de forma literal (QA-111).
+
+   `tipo_evento = prom` NO SE MANDA DESDE AQUÍ: lo teclea WF-8 como par fijo. Un
+   campo personalizado para una constante sería una pieza más que puede quedar
+   vacía, y su ausencia manda todo el PROM a la ruta del Tracker.
+
+   `ref_paciente` e `ID_Oportunidad` viajan por CAMPOS ESPEJO —terminados en
+   `_prom`— y no por los canónicos. Si el formulario escribiera directo sobre
+   `ref_paciente`, un enlace manipulado podría SOBRESCRIBIR EL SEUDÓNIMO del
+   contacto en el CRM. Con el espejo, lo peor que puede hacer un enlace roto es
+   un renglón denunciado en `Resultados`; el CRM queda intacto.
+   ───────────────────────────────────────────────────────────────────────────── */
+var CAMPO_REF = 'ref_paciente_prom';
+var CAMPO_OPP = 'id_oportunidad_prom';
+
+/* Momentos válidos. Son EXACTAMENTE los de CAT_MOMENTO en
+   Apps_Script_Tracker_v2.gs y los de campos_prom.csv: sin acentos y con el
+   espacio. valorDeCatalogo_() normaliza, pero mandar la forma canónica evita
+   depender de esa normalización. */
+var MOMENTOS = ['Basal', '30 dias', '90 dias', '180 dias'];
+
+/* Abreviaturas aceptadas en el fragmento del enlace, para que WF-7 pueda
+   escribir `m=30` en vez de `m=30%20dias`. */
+var ALIAS_MOMENTO = { '0':'Basal', 'basal':'Basal', '30':'30 dias', '90':'90 dias', '180':'180 dias' };
+
+// ===================== TEXTOS COMUNES =====================
+
+var T = {
+  pasoDe:      {es:'Paso {a} de {b}', en:'Step {a} of {b}'},
+  atras:       {es:'← Atrás',         en:'← Back'},
+  siguiente:   {es:'Siguiente →',     en:'Next →'},
+  enviar:      {es:'Enviar respuestas', en:'Submit answers'},
+  enviando:    {es:'Enviando…',       en:'Sending…'},
+  faltan:      {es:'Faltan respuestas obligatorias en este paso. Están marcadas abajo.',
+                en:'Some required answers are missing on this step. They are marked below.'},
+  faltanOtro:  {es:'Faltan respuestas obligatorias en un paso anterior. Le llevamos ahí.',
+                en:'Some required answers are missing on an earlier step. Taking you there.'},
+  requerido:   {es:'Esta respuesta es necesaria.', en:'This answer is required.'},
+  guardando:   {es:'Guardado ✓',      en:'Saved ✓'},
+  guardaAviso: {es:'Sus respuestas se guardan en este navegador conforme las contesta, así puede cerrar y continuar después.',
+                en:'Your answers are saved in this browser as you go, so you can close this and continue later.'},
+  errEnvio:    {es:'No pudimos enviar sus respuestas. Revise su conexión e inténtelo de nuevo; lo que contestó sigue guardado.',
+                en:'We could not send your answers. Check your connection and try again; what you answered is still saved.'},
+  gracias:     {es:'¡Gracias!',       en:'Thank you!'},
+  graciasTxt:  {es:'Recibimos su seguimiento. Su médico lo revisará antes de su siguiente contacto con NURA.',
+                en:'We received your follow-up. Your physician will review it before your next contact with NURA.'},
+  sinRefTit:   {es:'Este enlace está incompleto', en:'This link is incomplete'},
+  sinRefTxt:   {es:'Este cuestionario se abre desde el enlace que NURA le envió por mensaje. Ábralo tal como se lo mandamos, o escriba a consultas@nuracells.com y se lo reenviamos.',
+                en:'This questionnaire opens from the link NURA sent you by message. Please open it exactly as we sent it, or write to consultas@nuracells.com and we will resend it.'},
+  correoMal:   {es:'Escriba un correo electrónico válido.', en:'Please enter a valid email address.'},
+
+  /* La bienvenida. Existe porque el cuestionario arrancaba de golpe en «¿Qué
+     tanto dolor tiene en reposo?», sin decir qué era esto, cuánto tardaba ni qué
+     pasaba con lo contestado. Un paciente que no sabe cuánto falta abandona a la
+     mitad, y una evaluación a medias no entra en ningún promedio. */
+  biTitulo:    {es:'Su seguimiento', en:'Your follow-up'},
+  biIntro:     {es:'Nos ayuda a saber cómo va desde su tratamiento. Sus respuestas las revisa su médico y son parte de su expediente.',
+                en:'This helps us know how you have been since your treatment. Your physician reviews your answers, and they become part of your record.'},
+  biPuntos:    {es:['Son cinco pasos y toma unos cuatro minutos.',
+                    'No hay respuestas correctas ni incorrectas: conteste lo que de verdad siente.',
+                    'Se guarda solo conforme avanza, así que puede cerrar y continuar después.',
+                    'Si ha tenido algún efecto no esperado, hay un apartado para contarlo. Su médico lo revisa el mismo día.'],
+                en:['It is five steps and takes about four minutes.',
+                    'There are no right or wrong answers: tell us what you actually feel.',
+                    'It saves as you go, so you can close this and continue later.',
+                    'If you have had any unexpected effect, there is a section for it. Your physician reviews it the same day.']},
+  biBoton:     {es:'Comenzar', en:'Start'},
+  biRetomar:   {es:'Continuar donde se quedó', en:'Continue where you left off'}
+};
+
+// ===================== EL CUESTIONARIO, COMO DATOS =====================
+
+/* Cada `id` es EXACTAMENTE la clave que declara campos_prom.csv, porque val_()
+   del Apps Script compara las claves de forma literal mientras
+   sanearPayload_() las normaliza. Una diferencia de una sola mayúscula es un
+   campo que jamás llega, y el único síntoma es una celda vacía —idéntica a la
+   de una pregunta que nadie contestó (QA-111).
+   probar_cuestionario_prom.js compara ambos archivos distinguiendo mayúsculas. */
+
+var SECCIONES = [
+  {
+    id: 'dolor',
+    titulo: {es:'Su dolor', en:'Your pain'},
+    nota: {es:'Piense en cómo se ha sentido durante la última semana.',
+           en:'Think about how you have felt over the past week.'},
+    campos: [
+      { id:'eva_dolor_reposo', tipo:'escala', min:0, max:10, requerido:true,
+        label:{es:'¿Qué tanto dolor tiene en reposo?', en:'How much pain do you have at rest?'},
+        ayuda:{es:'Cuando está sentado o acostado, sin moverse. Elija el número que mejor represente su semana, no el peor momento.',
+               en:'When you are sitting or lying down, not moving. Pick the number that best represents your week, not your worst moment.'},
+        extremos:{es:['0 · Sin dolor','10 · El peor imaginable'],
+                  en:['0 · No pain','10 · Worst imaginable']} },
+      { id:'eva_dolor_actividad', tipo:'escala', min:0, max:10, requerido:true,
+        label:{es:'¿Y al moverse o hacer sus actividades?', en:'And when moving or doing your activities?'},
+        ayuda:{es:'Suele ser la medida que más importa en el día a día.',
+               en:'This is usually the measure that matters most day to day.'},
+        extremos:{es:['0 · Sin dolor','10 · El peor imaginable'],
+                  en:['0 · No pain','10 · Worst imaginable']} }
+    ]
+  },
+  {
+    id: 'mejoria',
+    titulo: {es:'Su mejoría', en:'Your improvement'},
+    campos: [
+      /* PGIC. Se pregunta con las siete leyendas y no con un número desnudo:
+         es la medida más citada de la literatura y pierde todo su sentido si el
+         paciente tiene que traducir "6" por su cuenta. Lo que se ENVÍA sigue
+         siendo el número, que es lo que el rango 1-7 del Apps Script valida. */
+      { id:'pgic_1_7', tipo:'opciones', columna:true, requerido:true,
+        label:{es:'Desde su tratamiento, ¿cómo se siente en general?',
+               en:'Since your treatment, how do you feel overall?'},
+        ayuda:{es:'Compárese con cómo estaba ANTES del tratamiento, no con la semana pasada. Es su impresión global, no solo el dolor.',
+               en:'Compare yourself with how you were BEFORE the treatment, not with last week. This is your overall impression, not just pain.'},
+        opciones:[
+          {valor:1, label:{es:'1 · Mucho peor',  en:'1 · Much worse'}},
+          {valor:2, label:{es:'2 · Peor',        en:'2 · Worse'}},
+          {valor:3, label:{es:'3 · Un poco peor',en:'3 · A little worse'}},
+          {valor:4, label:{es:'4 · Sin cambio',  en:'4 · No change'}},
+          {valor:5, label:{es:'5 · Un poco mejor',en:'5 · A little better'}},
+          {valor:6, label:{es:'6 · Mejor',       en:'6 · Better'}},
+          {valor:7, label:{es:'7 · Mucho mejor', en:'7 · Much better'}}
+        ] },
+      /* SIN VALOR DE FÁBRICA, Y NO ES UN DESCUIDO. Un <input type=range> SIEMPRE
+         tiene un valor, así que un deslizador que arranca en 70 escribe un 70 en
+         el expediente de todo paciente que jamás lo tocó, y ese 70 entra al
+         promedio. Es la regla del proyecto —hueco visible, nunca número
+         inventado— en su versión de navegador. El control arranca en blanco y
+         solo adquiere valor al primer toque. */
+      { id:'calidad_vida_eq_vas', tipo:'deslizador', min:0, max:100,
+        label:{es:'Del 0 al 100, ¿cómo califica su salud hoy?',
+               en:'From 0 to 100, how would you rate your health today?'},
+        ayuda:{es:'0 es la peor salud que se imagine; 100 la mejor. Puede dejarlo sin contestar.',
+               en:'0 is the worst health you can imagine; 100 the best. You may leave it blank.'} }
+    ]
+  },
+  {
+    id: 'vida',
+    titulo: {es:'Su día a día', en:'Your daily life'},
+    campos: [
+      { id:'analgesicos_uso', tipo:'opciones', requerido:true,
+        label:{es:'¿Con qué frecuencia toma analgésicos?', en:'How often do you take pain medication?'},
+        ayuda:{es:'Cualquier medicamento para el dolor, incluidos los que se compran sin receta. Piense en las últimas dos semanas.',
+               en:'Any pain medication, including over-the-counter ones. Think about the past two weeks.'},
+        opciones:[
+          {valor:'Ninguno',   label:{es:'Ninguno',   en:'None'}},
+          {valor:'Ocasional', label:{es:'Ocasional', en:'Occasionally'}},
+          {valor:'Diario',    label:{es:'Diario',    en:'Daily'}}
+        ] },
+      { id:'analgesicos_cambio', tipo:'opciones', requerido:true,
+        label:{es:'Comparado con antes del tratamiento, ¿cómo cambió ese consumo?',
+               en:'Compared with before the treatment, how did that change?'},
+        ayuda:{es:'Si dejó de tomarlos por completo, elija «Los suspendí» aunque haya sido poco a poco.',
+               en:'If you stopped them completely, choose "I stopped them" even if it was gradual.'},
+        opciones:[
+          {valor:'Igual',      label:{es:'Igual',        en:'The same'}},
+          {valor:'Menos',      label:{es:'Menos',        en:'Less'}},
+          {valor:'Mas',        label:{es:'Más',          en:'More'}},
+          {valor:'Suspendio',  label:{es:'Los suspendí', en:'I stopped them'}}
+        ] },
+      { id:'retorno_actividad', tipo:'opciones', requerido:true,
+        label:{es:'¿Volvió a las actividades que hacía antes?',
+               en:'Have you returned to the activities you did before?'},
+        ayuda:{es:'Trabajo, ejercicio, caminar, dormir de su lado, jugar con sus nietos: lo que el problema le había quitado. «En parte» si volvió a algunas y a otras no.',
+               en:'Work, exercise, walking, sleeping on your side, playing with your grandchildren: whatever the problem had taken from you. Choose "Partly" if you returned to some but not others.'},
+        opciones:[
+          {valor:'Si',      label:{es:'Sí',      en:'Yes'}},
+          {valor:'Parcial', label:{es:'En parte',en:'Partly'}},
+          {valor:'No',      label:{es:'No',      en:'No'}}
+        ] }
+    ]
+  },
+  {
+    id: 'seguridad',
+    titulo: {es:'Su seguridad', en:'Your safety'},
+    nota: {es:'Esta parte es la más importante para nosotros. Cuéntenos cualquier cosa, aunque le parezca menor.',
+           en:'This part matters most to us. Tell us anything, even if it seems minor.'},
+    campos: [
+      { id:'evento_adverso', tipo:'opciones', requerido:true,
+        label:{es:'¿Ha tenido algún efecto no esperado desde su tratamiento?',
+               en:'Have you had any unexpected effect since your treatment?'},
+        ayuda:{es:'Cualquier cosa que no esperaba: molestia en el sitio de aplicación, fiebre, cansancio, salpullido. Aunque haya sido leve y ya se le haya quitado, marque «Sí».',
+               en:'Anything you did not expect: discomfort at the injection site, fever, tiredness, a rash. Even if it was mild and has already gone, choose "Yes".'},
+        opciones:[
+          {valor:'No', label:{es:'No',  en:'No'}},
+          {valor:'Si', label:{es:'Sí',  en:'Yes'}}
+        ] },
+      /* La única condicional del cuestionario. Depende de un botón de opción,
+         así que se re-evalúa en el mismo instante en que se elige. */
+      /* `noPersistir` es la única excepción del autoguardado y es deliberada. Es
+         texto libre, y un relato puede identificar a alguien sin llevar un solo
+         nombre —"el señor que vino de Monterrey con su hija"—. Es la misma
+         decisión que lo dejó fuera de CLAVES_CON_VALOR, aplicada ahora al
+         dispositivo del paciente, que se presta y se comparte. */
+      { id:'evento_adverso_descripcion', tipo:'texto', requerido:true, noPersistir:true,
+        muestraSi: function(r){ return r.evento_adverso === 'Si'; },
+        label:{es:'Descríbalo con sus palabras', en:'Describe it in your own words'},
+        ayuda:{es:'Qué sintió, cuándo empezó y si ya se le quitó. Su médico lo revisa el mismo día. Si prefiere contárnoslo por teléfono, escriba "prefiero llamada".',
+               en:'What you felt, when it started and whether it has gone. Your physician reviews it the same day. If you would rather tell us by phone, write "prefer a call".'} }
+    ]
+  },
+  {
+    id: 'opinion',
+    titulo: {es:'Su opinión', en:'Your feedback'},
+    campos: [
+      { id:'satisfaccion_1_5', tipo:'estrellas', min:1, max:5, requerido:true,
+        label:{es:'¿Qué tan satisfecho está con su experiencia en NURA?',
+               en:'How satisfied are you with your experience at NURA?'},
+        ayuda:{es:'Es sobre el trato, las instalaciones y el acompañamiento, no sobre su resultado médico. Eso ya nos lo dijo en los pasos anteriores.',
+               en:'This is about how you were treated, the facilities and the follow-up, not about your medical outcome. You already told us that in the earlier steps.'} },
+      { id:'nps_0_10', tipo:'escala', min:0, max:10, requerido:true,
+        label:{es:'¿Qué tan probable es que nos recomiende a un amigo o familiar?',
+               en:'How likely are you to recommend us to a friend or family member?'},
+        ayuda:{es:'Piense en alguien cercano con un problema parecido al suyo.',
+               en:'Think of someone close to you with a problem similar to yours.'},
+        extremos:{es:['0 · Nada probable','10 · Muy probable'],
+                  en:['0 · Not likely','10 · Very likely']} },
+      /* EL CORREO NO ES BUROCRACIA: es lo único con lo que GHL reconoce al
+         contacto. Sin él, cada respuesta crea un contacto huérfano y el CRM se
+         llena de duplicados —tres por paciente—. NO se prellena desde el enlace
+         a propósito: eso pondría un dato identificable en el historial del
+         navegador, que es justo lo que MODO_SEUDONIMO existe para evitar.
+
+         Si lo teclea mal, el modo de fallo es benigno y está diseñado así: se
+         crea un contacto duplicado, pero la referencia y el id de oportunidad
+         viajan como CAMPOS DEL FORMULARIO, así que la fila en `Resultados` sale
+         correcta de todos modos. Se ensucia el CRM, no el registro clínico. */
+      { id:'email', tipo:'correo', requerido:true,
+        label:{es:'Su correo electrónico', en:'Your email address'},
+        ayuda:{es:'El mismo que registró en NURA. Nos sirve para saber que estas respuestas son suyas.',
+               en:'The same one you registered with NURA. We use it to know these answers are yours.'} },
+      { id:'__aviso', tipo:'aviso' }
+    ]
+  }
+];
+
+// ===================== ESTADO Y AYUDANTES PUROS =====================
+
+var estado = {
+  lang: 'es', paso: 0, respuestas: {}, ref: '', momento: '', opp: '',
+  vista: 'form', enviando: false, errores: [], errorEnvio: false, guardado: ''
+};
+
+/* Un correo suficientemente válido para atrapar el dedo resbalado, no para
+   validar el RFC 5322. Lo que de verdad se juega aquí es un contacto duplicado
+   en el CRM, no la integridad del registro clínico. */
+var RE_CORREO = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+
+/* Formas admitidas de los identificadores que llegan por el enlace. Lo que no
+   case se rechaza en vez de intentar limpiarse: un `ref` con caracteres raros
+   es un enlace roto o fabricado, y en los dos casos la respuesta correcta es no
+   abrir el cuestionario. */
+var RE_REF = /^[A-Za-z0-9-]{4,32}$/;
+var RE_OPP = /^[A-Za-z0-9_-]{6,40}$/;
+
+function t(obj){
+  if (obj == null) return '';
+  if (typeof obj === 'string') return obj;
+  return obj[estado.lang] != null ? obj[estado.lang] : (obj.es || '');
+}
+
+function esc(s){
+  return String(s == null ? '' : s)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+/**
+ * Lee el enlace personal del paciente DEL FRAGMENTO, no de la query.
+ *
+ * El fragmento (`#…`) NUNCA viaja al servidor, así que la referencia del
+ * paciente no queda escrita en los registros de acceso de GitHub Pages. Es un
+ * seudónimo —para eso existe MODO_SEUDONIMO— pero un seudónimo que no se
+ * registra es mejor que uno que sí.
+ *
+ * Forma: #ref=NURA-2026-001&m=30&opp=TA6OKCbtyNo2CNT9qDfl&lang=es
+ *
+ * LOS TRES PRIMEROS SON OBLIGATORIOS Y SIN ELLOS EL CUESTIONARIO NO ABRE:
+ *
+ *  · `ref` — es la mitad de la llave del renglón. Un PROM sin referencia
+ *    colisiona con TODOS los demás PROM sin referencia y se pisan entre sí. Un
+ *    dato que se pisa a sí mismo es peor que uno que no llegó, porque el que no
+ *    llegó se nota.
+ *  · `m` — la otra mitad. Tomar `30 dias` por omisión fabricaría media llave y
+ *    corrompería la fila en silencio. Acepta el número suelto por comodidad del
+ *    workflow (`m=30`), pero solo traduce a un valor del catálogo: nunca inventa.
+ *  · `opp` — sin `ID_Oportunidad`, `doPost` devuelve 400 ANTES de
+ *    `registrarEvento_()`, así que el PROM no queda ni siquiera en `Eventos`.
+ *    Es el único dato cuya ausencia pierde la respuesta entera.
+ *
+ * Todo parámetro no declarado SE IGNORA y jamás se reenvía. No es limpieza: es
+ * lo que impide que un enlace fabricado inyecte un campo que nadie declaró.
+ */
+function leerFragmento(hash){
+  var h = String(hash || '').replace(/^#/, '');
+  var out = { ref:'', momento:'', opp:'', lang:'' };
+  h.split('&').forEach(function(par){
+    var i = par.indexOf('=');
+    if (i < 0) return;
+    var k, v;
+    try {
+      k = decodeURIComponent(par.slice(0, i)).toLowerCase();
+      v = decodeURIComponent(par.slice(i + 1)).trim();
+    } catch (e) { return; }   // porcentaje mal formado: se descarta el par
+    if (k === 'ref')  out.ref = v;
+    if (k === 'm' || k === 'momento') out.momento = v;
+    if (k === 'opp' || k === 'id_oportunidad') out.opp = v;
+    if (k === 'lang') out.lang = v.toLowerCase();
+  });
+
+  if (out.momento) {
+    var directo = MOMENTOS.filter(function(m){
+      return m.toLowerCase() === out.momento.toLowerCase();
+    })[0];
+    out.momento = directo || ALIAS_MOMENTO[out.momento.toLowerCase()] || '';
+  }
+  if (!RE_REF.test(out.ref)) out.ref = '';
+  if (!RE_OPP.test(out.opp)) out.opp = '';
+  if (out.lang !== 'es' && out.lang !== 'en') out.lang = '';
+  return out;
+}
+
+/** ¿El enlace trae lo indispensable para que la respuesta pueda cruzarse? */
+function enlaceCompleto(f){
+  return !!(f && f.ref && f.momento && f.opp);
+}
+
+/** Un campo se muestra si no tiene condición o si su condición se cumple. */
+function campoVisible(c, respuestas){
+  return !c.muestraSi || c.muestraSi(respuestas);
+}
+
+function seccionesVisibles(){
+  return SECCIONES;   // ninguna sección es condicional en esta versión
+}
+
+/**
+ * Ids obligatorios que faltan en UNA sección. Un campo oculto no se valida:
+ * pedir un dato que no se ve deja al paciente atrapado sin saber qué le falta.
+ */
+function erroresDeSeccion(sec, respuestas){
+  var faltan = [];
+  sec.campos.forEach(function(c){
+    if (c.tipo === 'aviso') {
+      if (!respuestas.consentimiento_datos) faltan.push('consentimiento_datos');
+      return;
+    }
+    if (!c.requerido) return;
+    if (!campoVisible(c, respuestas)) return;
+    var v = respuestas[c.id];
+    // Un CERO es una respuesta, no un hueco: `eva_dolor_reposo = 0` es el mejor
+    // desenlace posible. Por eso se compara contra vacío y no contra falsy.
+    if (v === undefined || v === null || v === '') { faltan.push(c.id); return; }
+    if (c.tipo === 'correo' && !RE_CORREO.test(String(v).trim())) faltan.push(c.id);
+  });
+  return faltan;
+}
+
+/**
+ * TODOS los errores, con el índice de su sección.
+ *
+ * El motor original solo validaba la sección ACTUAL al enviar, así que se podía
+ * retroceder, borrar un dato obligatorio y enviar de todos modos. Aquí se
+ * revisan todas antes de enviar y se lleva al paciente al primer paso incompleto.
+ */
+function todosLosErrores(respuestas){
+  var out = [];
+  seccionesVisibles().forEach(function(sec, i){
+    erroresDeSeccion(sec, respuestas).forEach(function(id){
+      out.push({ paso: i, id: id });
+    });
+  });
+  return out;
+}
+
+/**
+ * Arma lo que se envía. Las claves son EXACTAMENTE las de campos_prom.csv.
+ *
+ * `fecha_evaluacion` NO se manda a propósito: el Apps Script la deriva con
+ * hoyTexto_(), que es hora de México. Mandar la fecha local del paciente haría
+ * que alguien contestando desde Tokio fechara su evaluación un día adelante y
+ * corriera su Ventana_Cumplida, sin que nada fallara de forma visible.
+ *
+ * Una casilla sin marcar no viaja en un formulario, así que el consentimiento
+ * se normaliza a un valor explícito: "no consintió" y "no se preguntó" no
+ * pueden verse igual en un expediente.
+ */
+function construirPayload(respuestas, ref, momento, opp){
+  var p = {};
+  /* Con corchetes y comillas, no con punto. Estas cadenas son NOMBRES DE CABLE:
+     tienen que poder encontrarse con una búsqueda literal, porque eso es
+     exactamente lo que hace verificar_campos_prom.ps1 para comprobar que el
+     cuestionario manda lo que campos_prom.csv declara. Una clave escondida en
+     una propiedad con punto pasa desapercibida a esa comprobación. */
+  p[CAMPO_REF] = ref;
+  p[CAMPO_OPP] = opp;
+  p['momento'] = momento;
+  /* `via_evaluacion` NO se manda: el Apps Script ya escribe 'Formulario' por
+     omisión, que es exactamente lo que esto es. Un campo personalizado menos y
+     un modo de fallo menos. */
+  p['consentimiento_datos'] = respuestas.consentimiento_datos ? 'si' : 'no';
+  p['aviso_privacidad_version'] = CONFIG.avisoVersion;
+
+  SECCIONES.forEach(function(sec){
+    sec.campos.forEach(function(c){
+      if (c.tipo === 'aviso') return;
+      // Un campo oculto no viaja. Es lo que impide que una descripción de evento
+      // adverso escrita y luego retractada llegue con `Evento_Adverso = No`, que
+      // dejaría el relato en la hoja SIN disparar el correo de la NOM-220.
+      if (!campoVisible(c, respuestas)) return;
+      var v = respuestas[c.id];
+      // Se omite lo no contestado. NO viaja como 0 ni como cadena vacía: el
+      // Apps Script conserva el valor previo cuando lo entrante viene vacío, y
+      // un 0 inventado sí lo sobrescribiría.
+      if (v === undefined || v === null || v === '') return;
+      p[c.id] = v;
+    });
+  });
+  return p;
+}
+
+// ===================== ENVÍO — el único punto que conoce el destino =====================
+
+/**
+ * Devuelve una promesa. Resuelve solo cuando hay motivo real para creer que
+ * llegó, y rechaza en cualquier otro caso.
+ *
+ * POR QUÉ NO SE USA mode:'no-cors'. Con una respuesta opaca la promesa resuelve
+ * aunque el servidor haya devuelto un 500, así que el paciente vería "¡Gracias!"
+ * sin que llegara nada y nadie se enteraría hasta echar de menos el renglón. Es
+ * la familia de QA-104: una garantía que el código afirma y no cumple. Si la
+ * prueba del Paso 0 demuestra que GHL exige `no-cors`, entonces la pantalla
+ * final tiene que dejar de prometer que se recibió.
+ */
+function enviarRespuestas(payload){
+  if (CONFIG.destino === 'demo') {
+    if (typeof console !== 'undefined') console.log('DEMO — sin destino configurado:', payload);
+    return Promise.reject(new Error('destino sin configurar'));
+  }
+
+  if (CONFIG.destino === 'webhook') {
+    return fetch(CONFIG.webhookUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    }).then(function(r){
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      return r;
+    });
+  }
+
+  if (CONFIG.destino === 'apps-script') {
+    /**
+     * HAY DOS CAPAS DE NOMBRES Y AQUÍ SE CRUZAN. Es el error caro de esta vía.
+     *
+     * `construirPayload()` emite los nombres de los CAMPOS DE GHL (columna
+     * `Key_GHL` de campos_prom.csv), porque nacieron para el formulario nativo.
+     * Hablando directo con el Apps Script, lo que importa son los PARES DEL
+     * WEBHOOK (columna `Clave_Webhook`), que es lo que `val_()` compara —y lo
+     * compara de forma LITERAL, mientras `sanearPayload_()` normaliza: QA-111—.
+     *
+     * Solo dos claves difieren, y son justo las dos sin las que no entra nada:
+     *
+     *   ref_paciente_prom    → ref_paciente     (mitad de la llave del renglón)
+     *   id_oportunidad_prom  → ID_Oportunidad   (sin él, doPost devuelve 400
+     *                                            ANTES de registrarEvento_ y el
+     *                                            dato se pierde entero)
+     *
+     * Los campos espejo terminados en `_prom` existían para que el formulario
+     * nativo no pudiera escribir sobre los canónicos del contacto. Sin ese
+     * formulario en medio, el espejo ya no protege de nada aquí: quien recibe es
+     * el Apps Script, y valida por su cuenta.
+     */
+    var cuerpo = { token: CONFIG.tokenProm, tipo_evento: 'prom' };
+    Object.keys(payload).forEach(function(k){
+      if (k === CAMPO_REF)      cuerpo['ref_paciente']   = payload[k];
+      else if (k === CAMPO_OPP) cuerpo['ID_Oportunidad'] = payload[k];
+      else                      cuerpo[k]                = payload[k];
+    });
+
+    /**
+     * DOS DETALLES QUE HACEN O ROMPEN ESTA VÍA, y ninguno se ve en la firma.
+     *
+     * 1) `Content-Type: text/plain` Y NO `application/json`. Apps Script no
+     *    responde al preflight OPTIONS —no existe doOptions y no se puede
+     *    escribir—, así que un POST con `application/json` dispara preflight y
+     *    muere antes de salir. Con `text/plain` el navegador lo trata como
+     *    *simple request* y no hay preflight. El cuerpo sigue siendo JSON y
+     *    `JSON.parse(e.postData.contents)` lo lee igual: lo que cambia es lo que
+     *    el navegador decide preguntar antes, no lo que llega.
+     *
+     * 2) `r.ok` NO SIRVE PARA SABER SI SALIÓ BIEN. json_() del Apps Script lo
+     *    documenta: "Apps Script no permite fijar el código HTTP en una Web
+     *    App", así que un 401 y un 200 llegan los dos como HTTP 200 con el
+     *    código real dentro del cuerpo. Confiar en `r.ok` aquí le mostraría
+     *    "¡Gracias!" a un paciente cuyo token fue rechazado. Es la familia de
+     *    QA-104 —una garantía que el código afirma y no cumple— y por eso se
+     *    lee `ok` del JSON y se rechaza con el error que devolvió el script.
+     */
+    return fetch(CONFIG.appsScriptUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+      body: JSON.stringify(cuerpo)
+    })
+      .then(function(r){ return r.text(); })
+      .then(function(texto){
+        var d;
+        try { d = JSON.parse(texto); }
+        catch (e) { throw new Error('respuesta ilegible del servidor'); }
+        if (!d || d.ok !== true) throw new Error((d && d.error) || 'rechazado');
+        return d;
+      });
+  }
+
+  if (CONFIG.destino === 'formulario-ghl') {
+    var cuerpo = new FormData();
+    cuerpo.append('formId', CONFIG.formularioGhlId);
+    Object.keys(payload).forEach(function(k){ cuerpo.append(k, payload[k]); });
+    return fetch(CONFIG.formularioGhlUrl, { method:'POST', body: cuerpo })
+      .then(function(r){
+        if (!r.ok) throw new Error('HTTP ' + r.status);
+        return r;
+      });
+  }
+
+  return Promise.reject(new Error('destino desconocido: ' + CONFIG.destino));
+}
+
+// ===================== BORRADOR =====================
+
+/**
+ * La llave lleva la referencia Y el momento. Sin el momento, la evaluación de
+ * los 90 días reabriría el borrador de la de 30 y el paciente vería sus
+ * respuestas viejas ya puestas — que es peor que empezar en blanco, porque
+ * parece que ya contestó.
+ */
+function llaveBorrador(ref, momento){
+  return 'nura_prom:' + ref + ':' + momento;
+}
+
+/* La indirección con promesas se conserva del motor original: es el punto donde
+   algún día se enchufa un backend real sin tocar nada del cuestionario. */
+var almacen = {
+  set: function(k, v){ try { localStorage.setItem(k, v); return Promise.resolve(); }
+                       catch(e){ return Promise.reject(e); } },
+  get: function(k){    try { return Promise.resolve(localStorage.getItem(k)); }
+                       catch(e){ return Promise.reject(e); } },
+  del: function(k){    try { localStorage.removeItem(k); return Promise.resolve(); }
+                       catch(e){ return Promise.reject(e); } }
+};
+
+function rebotar(fn, ms){
+  var t2;
+  return function(){
+    var args = arguments;
+    clearTimeout(t2);
+    t2 = setTimeout(function(){ fn.apply(null, args); }, ms);
+  };
+}
+
+/**
+ * Copia de las respuestas SIN los campos marcados `noPersistir`.
+ *
+ * Hoy eso es solo la descripción del evento adverso, y es la razón entera de que
+ * esta función exista: el borrador vive en el dispositivo del paciente, que se
+ * presta y se comparte.
+ */
+function respuestasPersistibles(respuestas){
+  var fuera = {};
+  SECCIONES.forEach(function(sec){
+    sec.campos.forEach(function(c){ if (c.noPersistir) fuera[c.id] = true; });
+  });
+  var out = {};
+  Object.keys(respuestas).forEach(function(k){ if (!fuera[k]) out[k] = respuestas[k]; });
+  return out;
+}
+
+function guardarBorrador(){
+  if (!estado.ref || !estado.momento) return;
+  var payload = JSON.stringify({
+    respuestas: respuestasPersistibles(estado.respuestas),
+    paso: estado.paso,               // el motor original no lo guardaba: al
+    lang: estado.lang,               // reabrir se volvía al paso 1
+    actualizado: new Date().toISOString()
+  });
+  almacen.set(llaveBorrador(estado.ref, estado.momento), payload).then(function(){
+    pintarGuardado(t(T.guardando));
+    setTimeout(function(){ pintarGuardado(''); }, 1600);
+  }).catch(function(){ /* navegador sin almacenamiento: no es motivo de alarma */ });
+}
+
+var autoguardar = rebotar(guardarBorrador, 700);
+
+function cargarBorrador(){
+  return almacen.get(llaveBorrador(estado.ref, estado.momento)).then(function(txt){
+    if (!txt) return;
+    var d = JSON.parse(txt);
+    estado.respuestas = d.respuestas || {};
+    if (typeof d.paso === 'number') estado.paso = d.paso;
+    if (d.lang === 'es' || d.lang === 'en') estado.lang = d.lang;
+  }).catch(function(){ /* borrador ilegible: se empieza en blanco */ });
+}
+
+// ===================== RENDER =====================
+
+function elApp(){ return document.getElementById('app'); }
+
+function pintarGuardado(txt){
+  var el = document.getElementById('nura-guardado');
+  if (el) el.textContent = txt;   // parche puntual: no re-renderiza el paso
+}
+
+function htmlProgreso(){
+  var secs = seccionesVisibles();
+  var nodos = '';
+  secs.forEach(function(s, i){
+    var cls = i < estado.paso ? ' hecho' : (i === estado.paso ? ' actual' : '');
+    nodos += '<div class="prog-node' + cls + '"></div>';
+    if (i < secs.length - 1) nodos += '<div class="prog-line' + (i < estado.paso ? ' hecho' : '') + '"></div>';
+  });
+  var cap = t(T.pasoDe).replace('{a}', estado.paso + 1).replace('{b}', secs.length);
+  return '<div class="prog"><div class="prog-track">' + nodos + '</div>' +
+         '<div class="prog-cap">' + esc(cap) + '</div></div>';
+}
+
+function htmlCampo(c){
+  if (!campoVisible(c, estado.respuestas)) return '';
+  if (c.tipo === 'aviso') return htmlAviso();
+
+  var v = estado.respuestas[c.id];
+  var mal = estado.errores.indexOf(c.id) >= 0;
+  var req = c.requerido ? ' <span class="marca-req" aria-hidden="true">*</span>' : '';
+  var ayuda = c.ayuda ? '<div class="ayuda">' + esc(t(c.ayuda)) + '</div>' : '';
+  var cuerpo = '';
+
+  if (c.tipo === 'escala') {
+    var botones = '';
+    for (var i = c.min; i <= c.max; i++) {
+      botones += '<button type="button" class="esc-btn' + (v === i ? ' on' : '') + '"' +
+                 ' data-campo="' + esc(c.id) + '" data-valor="' + i + '" data-num="1"' +
+                 ' aria-pressed="' + (v === i) + '">' + i + '</button>';
+    }
+    var cols = (c.max - c.min + 1) > 6 ? ' g11' : ' g5';
+    cuerpo = '<div class="escala' + cols + '" role="group">' + botones + '</div>';
+    if (c.extremos) {
+      var ex = t(c.extremos);
+      cuerpo += '<div class="extremos"><span>' + esc(ex[0]) + '</span><span>' + esc(ex[1]) + '</span></div>';
+    }
+  }
+  else if (c.tipo === 'estrellas') {
+    var est = '';
+    for (var j = c.min; j <= c.max; j++) {
+      est += '<button type="button" class="est-btn' + (v >= j ? ' on' : '') + '"' +
+             ' data-campo="' + esc(c.id) + '" data-valor="' + j + '" data-num="1"' +
+             ' aria-label="' + j + '/' + c.max + '" aria-pressed="' + (v === j) + '">★</button>';
+    }
+    cuerpo = '<div class="estrellas" role="group">' + est + '</div>';
+  }
+  else if (c.tipo === 'deslizador') {
+    // Sin contestar se dibuja el guion y el pulgar al centro, pero NO se escribe
+    // nada en las respuestas. El valor solo nace al primer toque.
+    var sinResp = (v === undefined || v === null || v === '');
+    var pos = sinResp ? Math.round((c.min + c.max) / 2) : v;
+    cuerpo = '<div class="desl-fila"><span class="desl-val" id="dv-' + esc(c.id) + '">' +
+             (sinResp ? '—' : esc(v)) + '</span>' +
+             '<input type="range" min="' + c.min + '" max="' + c.max + '" value="' + esc(pos) + '"' +
+             ' data-desliza="' + esc(c.id) + '" aria-label="' + esc(t(c.label)) + '"></div>';
+  }
+  else if (c.tipo === 'correo') {
+    cuerpo = '<input type="email" inputmode="email" autocomplete="email"' +
+             ' data-texto="' + esc(c.id) + '" value="' + esc(v || '') + '"' +
+             ' aria-labelledby="lbl-' + esc(c.id) + '">';
+  }
+  else if (c.tipo === 'opciones') {
+    var ops = c.opciones.map(function(o){
+      var sel = String(v) === String(o.valor);
+      return '<button type="button" class="op-btn' + (sel ? ' on' : '') + '"' +
+             ' data-campo="' + esc(c.id) + '" data-valor="' + esc(o.valor) + '"' +
+             (typeof o.valor === 'number' ? ' data-num="1"' : '') +
+             ' aria-pressed="' + sel + '">' + esc(t(o.label)) + '</button>';
+    }).join('');
+    cuerpo = '<div class="ops' + (c.columna ? ' col' : '') + '" role="group">' + ops + '</div>';
+  }
+  else if (c.tipo === 'texto') {
+    cuerpo = '<textarea data-texto="' + esc(c.id) + '">' + esc(v || '') + '</textarea>';
+  }
+
+  return '<div class="campo' + (mal ? ' mal' : '') + '" data-campo-caja="' + esc(c.id) + '">' +
+         '<span class="preg" id="lbl-' + esc(c.id) + '">' + esc(t(c.label)) + req + '</span>' +
+         ayuda + cuerpo +
+         (mal ? '<div class="err">' + esc(t(T.requerido)) + '</div>' : '') +
+         '</div>';
+}
+
+function htmlPaso(){
+  var secs = seccionesVisibles();
+  if (estado.paso >= secs.length) estado.paso = secs.length - 1;
+  if (estado.paso < 0) estado.paso = 0;
+  var sec = secs[estado.paso];
+  var primero = estado.paso === 0;
+  var ultimo = estado.paso === secs.length - 1;
+
+  var out = htmlProgreso() + '<div class="card">';
+  if (estado.errores.length) out += '<div class="err-caja" role="alert">' + esc(t(T.faltan)) + '</div>';
+  if (estado.errorEnvio)     out += '<div class="err-caja" role="alert">' + esc(t(T.errEnvio)) + '</div>';
+  out += '<h1 tabindex="-1" id="tit-paso">' + esc(t(sec.titulo)) + '</h1>';
+  if (sec.nota) out += '<p class="nota">' + esc(t(sec.nota)) + '</p>';
+  out += sec.campos.map(htmlCampo).join('');
+
+  out += '<div class="nav">';
+  out += primero ? '<span></span>'
+                 : '<button type="button" class="btn btn-s" data-nav="atras">' + esc(t(T.atras)) + '</button>';
+  out += ultimo
+    ? '<button type="button" class="btn btn-p" data-nav="enviar"' + (estado.enviando ? ' disabled' : '') + '>' +
+      esc(estado.enviando ? t(T.enviando) : t(T.enviar)) + '</button>'
+    : '<button type="button" class="btn btn-p" data-nav="siguiente">' + esc(t(T.siguiente)) + '</button>';
+  out += '</div>';
+  out += '<div class="guardado" id="nura-guardado" aria-live="polite"></div>';
+  out += '</div>';
+  out += '<p class="ayuda" style="text-align:center;margin-top:14px">' + esc(t(T.guardaAviso)) + '</p>';
+  return out;
+}
+
+function htmlAviso(){
+  var mal = estado.errores.indexOf('consentimiento_datos') >= 0;
+  return '<div class="campo' + (mal ? ' mal' : '') + '">' +
+  '<details class="aviso">' +
+    '<summary>' + (estado.lang === 'en' ? 'Privacy Notice — please read before submitting'
+                                        : 'Aviso de Privacidad — léalo antes de enviar') + '</summary>' +
+    (estado.lang === 'en' ? AVISO_EN : AVISO_ES) +
+  '</details>' +
+  '<div class="consent">' +
+    '<label class="chk"><input type="checkbox" data-consent="1"' +
+      (estado.respuestas.consentimiento_datos ? ' checked' : '') + '>' +
+      '<span>' + (estado.lang === 'en'
+        ? 'I have read the Privacy Notice and give my <strong>express consent</strong> for NURA to process my personal data, including my <strong>sensitive health data</strong>, for the primary purposes stated above. <span class="marca-req">*</span>'
+        : 'He leído el Aviso de Privacidad y otorgo mi <strong>consentimiento expreso</strong> para que NURA trate mis datos personales, incluidos mis <strong>datos personales sensibles de salud</strong>, para las finalidades primarias señaladas. <span class="marca-req">*</span>') +
+      '</span></label>' +
+  '</div>' +
+  (mal ? '<div class="err">' + esc(t(T.requerido)) + '</div>' : '') +
+  '</div>';
+}
+
+/* AVISO DE PRIVACIDAD SIMPLIFICADO (LFPDPPP art. 17 y 18).
+   Texto idéntico al de cuestionario_candidatura.html, que a su vez es fiel a
+   EXPEDIENTE CLINICO/NURA_Aviso_de_privacidad_simplificado.docx y a
+   nura-beauty-spa/src/data/legal.ts → avisoSimplificado.
+   Va el SIMPLIFICADO y no el corto porque este cuestionario SÍ recaba datos
+   personales sensibles de salud: dolor, medicación y eventos adversos.
+   NO editar el fondo del texto sin revisión jurídica. Si cambia, sube también
+   CONFIG.avisoVersion. */
+var AVISO_ES =
+'<div class="cuerpo">' +
+'<p>En cumplimiento con la Ley Federal de Protección de Datos Personales en Posesión de los Particulares (LFPDPPP) y su Reglamento, <strong>Dr. Alan Francisco Castro Villalonga</strong> con Cédula Profesional <strong>13111347</strong>, en calidad de Responsable Sanitario y del tratamiento de sus datos personales, con nombre comercial <strong>"NURA BEAUTY SPA"</strong> y domicilio en Av. Naciones Unidas 5069, Col. Jardines Universidad, 45110 Zapopan, Jalisco, México, le informa:</p>' +
+'<p><strong>Datos que recabamos.</strong> Para la prestación de nuestros servicios, recabamos sus datos de identificación y contacto y, de manera primordial, <strong>Datos Personales Sensibles</strong>, incluyendo su historial clínico, estado de salud física y mental, antecedentes patológicos, información sobre lesiones y tratamientos previos, resultados de estudios y fotografías para la integración y seguimiento de su expediente clínico.</p>' +
+'<p><strong>Finalidades primarias</strong> (necesarias para atenderle):</p>' +
+'<ul><li>Integrar su expediente clínico (en cumplimiento de la NOM-004-SSA3-2012).</li>' +
+'<li>Dar seguimiento a la evolución de su tratamiento.</li>' +
+'<li>Cumplir con la farmacovigilancia que exige la NOM-220-SSA1-2016.</li>' +
+'<li>Agendar, gestionar, confirmar y dar seguimiento a sus citas.</li></ul>' +
+'<p><strong>Sus derechos.</strong> Puede ejercer sus derechos de Acceso, Rectificación, Cancelación y Oposición (ARCO), así como revocar su consentimiento, escribiendo a <a href="mailto:consultas@nuracells.com">consultas@nuracells.com</a>.</p>' +
+'<p><strong>Aviso completo.</strong> Puede consultar el Aviso de Privacidad Integral en nuestra recepción o solicitarlo al mismo correo.</p>' +
+'</div>';
+
+var AVISO_EN =
+'<div class="cuerpo">' +
+'<p><em>Courtesy translation. The Spanish version is the legally binding one under Mexican law.</em></p>' +
+'<p>In compliance with Mexico\'s Federal Law on Protection of Personal Data Held by Private Parties (LFPDPPP) and its Regulations, <strong>Dr. Alan Francisco Castro Villalonga</strong>, Professional License No. <strong>13111347</strong>, acting as Health Officer and as data controller, trading as <strong>"NURA BEAUTY SPA"</strong>, with address at Av. Naciones Unidas 5069, Col. Jardines Universidad, 45110 Zapopan, Jalisco, Mexico, informs you of the following:</p>' +
+'<p><strong>Data we collect.</strong> To provide our services we collect your identification and contact data and, primarily, <strong>Sensitive Personal Data</strong>, including your clinical history, physical and mental health status, pathological history, information on injuries and previous treatments, test results and photographs, for the purpose of building and following up your medical record.</p>' +
+'<p><strong>Primary purposes</strong> (required in order to treat you):</p>' +
+'<ul><li>To build your medical record (in compliance with NOM-004-SSA3-2012).</li>' +
+'<li>To follow up on how your treatment progresses.</li>' +
+'<li>To comply with the pharmacovigilance required by NOM-220-SSA1-2016.</li>' +
+'<li>To schedule, manage, confirm and follow up on your appointments.</li></ul>' +
+'<p><strong>Your rights.</strong> You may exercise your rights of Access, Rectification, Cancellation and Objection (ARCO), and withdraw your consent, by writing to <a href="mailto:consultas@nuracells.com">consultas@nuracells.com</a>.</p>' +
+'<p><strong>Full notice.</strong> The Comprehensive Privacy Notice is available at our reception desk or on request at the same email address.</p>' +
+'</div>';
+
+function htmlSinRef(){
+  return '<div class="card"><h1>' + esc(t(T.sinRefTit)) + '</h1>' +
+         '<p class="nota">' + esc(t(T.sinRefTxt)) + '</p></div>';
+}
+
+function htmlFin(){
+  return '<div class="fin"><h1>' + esc(t(T.gracias)) + '</h1><p>' + esc(t(T.graciasTxt)) + '</p></div>';
+}
+
+/**
+ * La bienvenida. NO es un paso más de SECCIONES y es deliberado: ahí dentro
+ * todo tiene campos, validación y numeración, y meterla como sección obligaría
+ * a excluirla de las tres cosas. Como vista aparte, no toca nada de eso.
+ *
+ * Quien vuelve a un borrador empezado no la ve —ver iniciar()—: ya sabe qué es
+ * esto, y volver a explicárselo estorbaría en vez de ayudar.
+ */
+function htmlBienvenida(){
+  var puntos = t(T.biPuntos).map(function(p){
+    return '<li style="margin-bottom:9px">' + esc(p) + '</li>';
+  }).join('');
+
+  return '<div class="card">' +
+    '<h1 tabindex="-1" id="tit-paso">' + esc(t(T.biTitulo)) + '</h1>' +
+    '<p class="nota">' + esc(t(T.biIntro)) + '</p>' +
+    '<ul style="margin:0 0 22px;padding-left:20px;font-size:.9rem;color:var(--soft)">' +
+      puntos +
+    '</ul>' +
+    '<div class="nav"><span></span>' +
+      '<button type="button" class="btn btn-p" data-nav="comenzar">' +
+        esc(t(T.biBoton)) + '</button>' +
+    '</div>' +
+  '</div>';
+}
+
+function render(){
+  var app = elApp();
+  if (!app) return;
+  if (estado.vista === 'sin-ref')         app.innerHTML = htmlSinRef();
+  else if (estado.vista === 'fin')        app.innerHTML = htmlFin();
+  else if (estado.vista === 'bienvenida') app.innerHTML = htmlBienvenida();
+  else                                    app.innerHTML = htmlPaso();
+  document.documentElement.lang = estado.lang;
+}
+
+/**
+ * Lleva el foco al título del paso. Cada render reemplaza el DOM entero y el
+ * foco vuelve al body, así que quien navega con teclado o lector de pantalla se
+ * queda sin referencia de dónde está.
+ */
+function enfocarPaso(){
+  var h = document.getElementById('tit-paso');
+  if (h) h.focus();
+  window.scrollTo(0, 0);
+}
+
+// ===================== INTERACCIÓN =====================
+
+function fijar(id, valor){
+  estado.respuestas[id] = valor;
+  var i = estado.errores.indexOf(id);
+  if (i >= 0) estado.errores.splice(i, 1);
+
+  /* Un campo que deja de verse se BORRA, no solo se oculta.
+     Sin esto, quien marca "Sí", escribe el relato y se arrepiente dejaría el
+     texto guardado: `construirPayload` no lo mandaría —filtra por visibilidad—
+     pero seguiría en el estado, reaparecería al volver a marcar "Sí", y con la
+     regla de conservar el previo del Apps Script podría acabar en una hoja donde
+     `Evento_Adverso = No`. Un relato de evento adverso sin evento adverso, y sin
+     el correo de la NOM-220 que debía acompañarlo. */
+  SECCIONES.forEach(function(sec){
+    sec.campos.forEach(function(c){
+      if (c.muestraSi && !campoVisible(c, estado.respuestas)) delete estado.respuestas[c.id];
+    });
+  });
+
+  autoguardar();
+}
+
+function irAPaso(n){
+  estado.paso = n;
+  estado.errores = [];
+  render();
+  enfocarPaso();
+  guardarBorrador();
+}
+
+function siguiente(){
+  var secs = seccionesVisibles();
+  var faltan = erroresDeSeccion(secs[estado.paso], estado.respuestas);
+  if (faltan.length) { estado.errores = faltan; render(); enfocarPrimerError(); return; }
+  if (estado.paso < secs.length - 1) irAPaso(estado.paso + 1);
+}
+
+function enfocarPrimerError(){
+  var caja = document.querySelector('.campo.mal');
+  if (!caja) return;
+  var foco = caja.querySelector('button, textarea, input');
+  if (foco) foco.focus();
+  if (caja.scrollIntoView) caja.scrollIntoView({ block:'center' });
+}
+
+function enviar(){
+  if (estado.enviando) return;
+
+  // Se validan TODAS las secciones, no solo la actual.
+  var todos = todosLosErrores(estado.respuestas);
+  if (todos.length) {
+    var primero = todos[0];
+    if (primero.paso !== estado.paso) {
+      estado.paso = primero.paso;
+      estado.errores = todos.filter(function(e){ return e.paso === primero.paso; })
+                            .map(function(e){ return e.id; });
+      render();
+      enfocarPrimerError();
+      return;
+    }
+    estado.errores = todos.map(function(e){ return e.id; });
+    render();
+    enfocarPrimerError();
+    return;
+  }
+
+  estado.enviando = true;
+  estado.errorEnvio = false;
+  render();
+
+  enviarRespuestas(construirPayload(estado.respuestas, estado.ref, estado.momento, estado.opp))
+    .then(function(){
+      // El borrador se borra SOLO cuando el envío salió bien. Si falla, lo que
+      // el paciente contestó sigue ahí y solo tiene que volver a intentar.
+      return almacen.del(llaveBorrador(estado.ref, estado.momento));
+    })
+    .then(function(){
+      estado.enviando = false;
+      estado.vista = 'fin';
+      render();
+      window.scrollTo(0, 0);
+    })
+    .catch(function(){
+      estado.enviando = false;
+      estado.errorEnvio = true;
+      render();
+      window.scrollTo(0, 0);
+    });
+}
+
+function cablear(){
+  document.addEventListener('click', function(e){
+    var b = e.target.closest ? e.target.closest('[data-campo],[data-nav],[data-lang]') : null;
+    if (!b) return;
+
+    if (b.hasAttribute('data-lang')) {
+      estado.lang = b.getAttribute('data-lang');
+      Array.prototype.forEach.call(document.querySelectorAll('[data-lang]'), function(x){
+        x.classList.toggle('on', x.getAttribute('data-lang') === estado.lang);
+      });
+      autoguardar();
+      render();
+      return;
+    }
+    if (b.hasAttribute('data-nav')) {
+      var a = b.getAttribute('data-nav');
+      if (a === 'comenzar') { estado.vista = 'form'; render(); enfocarPaso(); }
+      else if (a === 'atras') irAPaso(estado.paso - 1);
+      else if (a === 'siguiente') siguiente();
+      else if (a === 'enviar') enviar();
+      return;
+    }
+    var crudo = b.getAttribute('data-valor');
+    fijar(b.getAttribute('data-campo'), b.hasAttribute('data-num') ? Number(crudo) : crudo);
+    render();
+  });
+
+  document.addEventListener('input', function(e){
+    var el = e.target;
+    if (el.hasAttribute && el.hasAttribute('data-texto')) {
+      // Sin render(): re-dibujar aquí perdería el cursor a media palabra.
+      fijar(el.getAttribute('data-texto'), el.value);
+    } else if (el.hasAttribute && el.hasAttribute('data-desliza')) {
+      var id = el.getAttribute('data-desliza');
+      fijar(id, Number(el.value));
+      var v = document.getElementById('dv-' + id);
+      if (v) v.textContent = el.value;
+    }
+  });
+
+  document.addEventListener('change', function(e){
+    if (e.target.hasAttribute && e.target.hasAttribute('data-consent')) {
+      fijar('consentimiento_datos', e.target.checked);
+      render();
+    }
+  });
+}
+
+function iniciar(){
+  var f = leerFragmento(window.location.hash);
+  if (f.lang) estado.lang = f.lang;
+
+  if (!enlaceCompleto(f)) {
+    estado.vista = 'sin-ref';
+    cablear();
+    render();
+    return;
+  }
+
+  estado.ref = f.ref;
+  estado.momento = f.momento;
+  estado.opp = f.opp;
+  cablear();
+  cargarBorrador().then(function(){
+    Array.prototype.forEach.call(document.querySelectorAll('[data-lang]'), function(x){
+      x.classList.toggle('on', x.getAttribute('data-lang') === estado.lang);
+    });
+    /* La bienvenida es para quien EMPIEZA. A quien vuelve a un borrador ya
+       empezado se le lleva directo a donde se quedó: ya sabe qué es esto, y
+       volver a explicárselo sería un obstáculo, no una ayuda. */
+    if (!Object.keys(estado.respuestas).length) estado.vista = 'bienvenida';
+    render();
+  });
+}
+
+/* Se expone para que PRUEBAS/probar_cuestionario_prom.js evalúe ESTE archivo en
+   vez de una copia del esquema. Una copia se desincroniza en silencio y
+   entonces la prueba pasa mientras el cuestionario falla. */
+if (typeof window !== 'undefined') {
+  window.NURA_PROM = {
+    CONFIG: CONFIG, MOMENTOS: MOMENTOS, ALIAS_MOMENTO: ALIAS_MOMENTO,
+    CAMPO_REF: CAMPO_REF, CAMPO_OPP: CAMPO_OPP, SECCIONES: SECCIONES, T: T,
+    leerFragmento: leerFragmento, enlaceCompleto: enlaceCompleto,
+    campoVisible: campoVisible, seccionesVisibles: seccionesVisibles,
+    erroresDeSeccion: erroresDeSeccion, todosLosErrores: todosLosErrores,
+    construirPayload: construirPayload, llaveBorrador: llaveBorrador,
+    respuestasPersistibles: respuestasPersistibles, esc: esc, estado: estado,
+    /* El render se expone para poder comprobarlo sin un navegador: la suite
+       asegura que un paso dibuja los controles que su esquema declara. Es lo
+       único que hace falta para que un `tipo` mal escrito —que renderField
+       devuelve como cadena vacía, en silencio— deje de ser invisible. */
+    htmlPaso: htmlPaso, htmlCampo: htmlCampo, render: render, iniciar: iniciar,
+    /* `enviarRespuestas` se expone porque es EL punto que conoce el destino, y
+       sus dos decisiones —el Content-Type que evita el preflight, y leer `ok`
+       del cuerpo en vez de `r.ok`— no se ven desde fuera y son las que rompen
+       la vía entera si se tocan. La suite le pasa un `fetch` de mentira. */
+    enviarRespuestas: enviarRespuestas, htmlBienvenida: htmlBienvenida
+  };
+}
+
+if (typeof document !== 'undefined' && document.getElementById) {
+  var elV = document.getElementById('nura-version');
+  if (elV) elV.textContent = 'v' + CONFIG.version;
+  iniciar();
+}
+</script>
+</body>
+</html>

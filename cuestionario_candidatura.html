@@ -23,7 +23,7 @@
   input,select,textarea{width:100%;padding:11px 13px;border:1px solid var(--line);border-radius:9px;font:inherit;background:var(--bg);color:var(--ink)}
   input:focus,select:focus,textarea:focus{outline:2px solid var(--jade);outline-offset:1px;border-color:var(--jade)}
   textarea{min-height:88px;resize:vertical}
-  .req{color:var(--warm)}
+  .req{color:#B25F13}
   button.submit{margin-top:22px;width:100%;background:var(--jade);color:#fff;border:0;padding:14px;border-radius:10px;font-size:1rem;font-weight:600;cursor:pointer}
   button.submit:hover{background:var(--jade-d)}
   button.submit:disabled{opacity:.6;cursor:default}
@@ -31,9 +31,29 @@
   .ok h2{font-family:Georgia,serif;color:var(--jade-d);margin:0 0 8px}
   .hint{font-size:.78rem;color:var(--soft);margin-top:6px}
   footer{text-align:center;color:var(--soft);font-size:.75rem;margin-top:24px}
+
+  /* ---- Aviso de Privacidad Simplificado (LFPDPPP art. 17 y 18) ---- */
+  .aviso{margin-top:26px;border:1px solid var(--line);border-radius:11px;background:var(--tint);padding:14px 16px}
+  .aviso>summary{font-size:.86rem;font-weight:700;color:var(--jade);cursor:pointer;list-style:none}
+  .aviso>summary::-webkit-details-marker{display:none}
+  .aviso>summary::before{content:"▸ ";font-size:.9em}
+  .aviso[open]>summary::before{content:"▾ "}
+  .aviso .cuerpo{font-size:.78rem;color:#3C4A3F;margin-top:12px}
+  .aviso .cuerpo p{margin:0 0 9px}
+  .aviso .cuerpo ul{margin:0 0 9px;padding-left:20px}
+  .aviso .cuerpo li{margin-bottom:3px}
+  .aviso .cuerpo strong{color:var(--jade-d)}
+  .aviso .cuerpo a{color:var(--jade);text-decoration:underline}
+  .consent{margin-top:16px;padding:14px 16px;border:1px solid var(--line);border-left:4px solid var(--jade);border-radius:9px;background:var(--surf)}
+  .chk{display:flex;gap:11px;align-items:flex-start;font-size:.82rem;font-weight:400;margin:0;color:#3C4A3F;cursor:pointer}
+  .chk+.chk{margin-top:13px;padding-top:13px;border-top:1px dashed var(--line)}
+  .chk input{width:auto;flex:0 0 auto;margin:2px 0 0;min-width:20px;min-height:20px;accent-color:var(--jade)}
+
   [data-en]{display:none}
   body.en [data-es]{display:none}
   body.en [data-en]{display:revert}
+  body.en li[data-en],body.en p[data-en]{display:list-item}
+  body.en p[data-en]{display:block}
 </style>
 </head>
 <body>
@@ -43,8 +63,8 @@
     <h1><span data-es>¿Eres candidato/a?</span><span data-en>Are you a candidate?</span></h1>
     <p class="sub"><span data-es>Cuéntanos sobre ti y nos ponemos en contacto contigo para tu evaluación.</span><span data-en>Tell us about you and we'll get in touch for your evaluation.</span></p>
     <div class="lang">
-      <button type="button" class="on" onclick="setLang('es')">Español</button>
-      <button type="button" onclick="setLang('en')">English</button>
+      <button type="button" class="on" onclick="setLang('es',this)">Español</button>
+      <button type="button" onclick="setLang('en',this)">English</button>
     </div>
   </header>
 
@@ -82,9 +102,88 @@
     <label><span data-es>¿Cómo nos conociste?</span><span data-en>How did you hear about us?</span></label>
     <input name="fuente">
 
+    <!--
+      AVISO DE PRIVACIDAD SIMPLIFICADO
+      Texto reproducido FIEL a `EXPEDIENTE CLINICO/NURA_Aviso_de_privacidad_simplificado.docx`
+      (fecha declarada del integral: 23-oct-2025). Misma fuente que
+      `nura-beauty-spa/src/data/legal.ts` → `avisoSimplificado`.
+      NO editar el fondo del texto sin revisión jurídica.
+      PENDIENTE: cuando exista dominio propio, sustituir la línea del aviso integral
+      por la liga a <dominio>/aviso-de-privacidad. Ver README del sitio Astro.
+    -->
+    <details class="aviso">
+      <summary><span data-es>Aviso de Privacidad — léelo antes de enviar</span><span data-en>Privacy Notice — please read before submitting</span></summary>
+
+      <div class="cuerpo" data-es>
+        <p>En cumplimiento con la Ley Federal de Protección de Datos Personales en Posesión de los Particulares (LFPDPPP) y su Reglamento, <strong>Dr. Alan Francisco Castro Villalonga</strong> con Cédula Profesional <strong>13111347</strong>, en calidad de Responsable Sanitario y del tratamiento de sus datos personales, con nombre comercial <strong>"NURA BEAUTY SPA"</strong> y domicilio en Av. Naciones Unidas 5069, Col. Jardines Universidad, 45110 Zapopan, Jalisco, México, le informa:</p>
+
+        <p><strong>Datos que recabamos.</strong> Para la prestación de nuestros servicios, recabamos sus datos de identificación y contacto (nombre, teléfono, correo electrónico, fecha de nacimiento) y, de manera primordial, <strong>Datos Personales Sensibles</strong>, incluyendo su historial clínico, estado de salud física y mental, antecedentes patológicos, información sobre lesiones y tratamientos previos, resultados de estudios (incluyendo ecografías), y fotografías para la integración y seguimiento de su expediente clínico.</p>
+
+        <p><strong>Finalidades primarias</strong> (necesarias para atenderle):</p>
+        <ul>
+          <li>Integrar su expediente clínico (en cumplimiento de la NOM-004-SSA3-2012).</li>
+          <li>Realizar el diagnóstico y valoración de su estado de salud.</li>
+          <li>Proveer los tratamientos médicos, de rehabilitación física, nutrición y medicina estética que ha solicitado.</li>
+          <li>Agendar, gestionar, confirmar y dar seguimiento a sus citas.</li>
+          <li>Gestiones de facturación y cobranza por los servicios prestados.</li>
+        </ul>
+
+        <p><strong>Finalidades secundarias</strong> (no necesarias; puede negarlas más abajo sin que ello afecte su atención):</p>
+        <ul>
+          <li>Enviarle información sobre promociones, descuentos y nuevos servicios de la clínica.</li>
+          <li>Fines de mercadotecnia, prospección comercial y estadística.</li>
+        </ul>
+
+        <p><strong>Sus derechos.</strong> Puede ejercer sus derechos de Acceso, Rectificación, Cancelación y Oposición (ARCO), así como revocar su consentimiento, escribiendo a <a href="mailto:consultas@nuracells.com">consultas@nuracells.com</a>.</p>
+
+        <p><strong>Aviso completo.</strong> Puede consultar el Aviso de Privacidad Integral en nuestra recepción o solicitarlo al mismo correo.</p>
+      </div>
+
+      <div class="cuerpo" data-en>
+        <p><em>Courtesy translation. The Spanish version is the legally binding one under Mexican law.</em></p>
+
+        <p>In compliance with Mexico's Federal Law on Protection of Personal Data Held by Private Parties (LFPDPPP) and its Regulations, <strong>Dr. Alan Francisco Castro Villalonga</strong>, Professional License No. <strong>13111347</strong>, acting as Health Officer and as data controller, trading as <strong>"NURA BEAUTY SPA"</strong>, with address at Av. Naciones Unidas 5069, Col. Jardines Universidad, 45110 Zapopan, Jalisco, Mexico, informs you of the following:</p>
+
+        <p><strong>Data we collect.</strong> To provide our services we collect your identification and contact data (name, telephone, email, date of birth) and, primarily, <strong>Sensitive Personal Data</strong>, including your clinical history, physical and mental health status, pathological history, information on injuries and previous treatments, test results (including ultrasound scans), and photographs, for the purpose of building and following up your medical record.</p>
+
+        <p><strong>Primary purposes</strong> (required in order to treat you):</p>
+        <ul>
+          <li>To build your medical record (in compliance with NOM-004-SSA3-2012).</li>
+          <li>To carry out the diagnosis and assessment of your health status.</li>
+          <li>To provide the medical, physical rehabilitation, nutrition and aesthetic medicine treatments you have requested.</li>
+          <li>To schedule, manage, confirm and follow up on your appointments.</li>
+          <li>Billing and collection for the services provided.</li>
+        </ul>
+
+        <p><strong>Secondary purposes</strong> (not required; you may decline them below without affecting your care):</p>
+        <ul>
+          <li>Sending you information about promotions, discounts and new clinic services.</li>
+          <li>Marketing, commercial prospecting and statistical purposes.</li>
+        </ul>
+
+        <p><strong>Your rights.</strong> You may exercise your rights of Access, Rectification, Cancellation and Objection (ARCO), and withdraw your consent, by writing to <a href="mailto:consultas@nuracells.com">consultas@nuracells.com</a>.</p>
+
+        <p><strong>Full notice.</strong> The Comprehensive Privacy Notice is available at our reception desk or on request at the same email address.</p>
+      </div>
+    </details>
+
+    <div class="consent">
+      <label class="chk">
+        <input type="checkbox" name="consentimiento_datos" value="si" required>
+        <span data-es>He leído el Aviso de Privacidad y otorgo mi <strong>consentimiento expreso</strong> para que NURA trate mis datos personales, incluidos mis <strong>datos personales sensibles de salud</strong>, para las finalidades primarias señaladas. <span class="req">*</span></span>
+        <span data-en>I have read the Privacy Notice and give my <strong>express consent</strong> for NURA to process my personal data, including my <strong>sensitive health data</strong>, for the primary purposes stated above. <span class="req">*</span></span>
+      </label>
+
+      <label class="chk">
+        <input type="checkbox" name="rechaza_finalidades_secundarias" value="si">
+        <span data-es><strong>No acepto</strong> las finalidades secundarias (promociones, mercadotecnia y prospección comercial). Marcar esta casilla es opcional y no afecta mi atención médica.</span>
+        <span data-en><strong>I do not accept</strong> the secondary purposes (promotions, marketing and commercial prospecting). Ticking this box is optional and does not affect my medical care.</span>
+      </label>
+    </div>
+
     <button type="submit" class="submit" id="sb"><span data-es>Enviar</span><span data-en>Submit</span></button>
-    <p class="hint" data-es>Al enviar aceptas ser contactado por el equipo NURA. Tus datos se tratan de forma confidencial.</p>
-    <p class="hint" data-en>By submitting you agree to be contacted by the NURA team. Your data is treated confidentially.</p>
+    <p class="hint" data-es>Los resultados pueden variar; todo tratamiento requiere valoración médica previa.</p>
+    <p class="hint" data-en>Results may vary; every treatment requires a prior medical assessment.</p>
   </form>
 
   <div class="ok" id="ok">
@@ -100,19 +199,35 @@
   // Pega aquí la URL del "Inbound Webhook" de tu Workflow en GHL (o del Apps Script).
   // Cómo obtenerla: GHL → Automation → Workflow nuevo → Trigger "Inbound Webhook" → copiar URL.
   const WEBHOOK_URL = "PEGAR_URL_WEBHOOK_GHL_AQUI";
+  // Versión del Aviso de Privacidad que el paciente aceptó. Se guarda con el registro
+  // porque la LFPDPPP exige poder demostrar QUÉ texto se consintió, no solo que se consintió.
+  const AVISO_VERSION = "2025-10-23";
   // ====================
-  function setLang(l){document.body.classList.toggle('en',l==='en');document.querySelectorAll('.lang button').forEach(b=>b.classList.remove('on'));event.target.classList.add('on');document.documentElement.lang=l;}
+  function setLang(l,btn){
+    document.body.classList.toggle('en',l==='en');
+    document.querySelectorAll('.lang button').forEach(b=>b.classList.remove('on'));
+    btn.classList.add('on');
+    document.documentElement.lang=l;
+  }
   document.getElementById('f').addEventListener('submit',async function(e){
     e.preventDefault();
+    const form=e.target;
     const btn=document.getElementById('sb'); btn.disabled=true;
-    const data=Object.fromEntries(new FormData(e.target).entries());
+    const data=Object.fromEntries(new FormData(form).entries());
     data.tag_audiencia = data.dx_interes && data.dx_interes.indexOf('Dolor')===0 ? 'dolor-cronico' : (data.dx_interes==='Rejuvenecimiento'?'anti-aging':'otro');
+    // Constancia de consentimiento. Una casilla sin marcar NO viaja en FormData,
+    // así que se normaliza a un valor explícito: "no consintió" y "no se preguntó"
+    // no pueden verse igual en el expediente.
+    data.consentimiento_datos = form.consentimiento_datos.checked ? 'si' : 'no';
+    data.finalidades_secundarias = form.rechaza_finalidades_secundarias.checked ? 'no acepta' : 'acepta';
+    delete data.rechaza_finalidades_secundarias;
+    data.aviso_privacidad_version = AVISO_VERSION;
     data.origen_formulario='candidatura'; data.fecha=new Date().toISOString();
     try{
       if(WEBHOOK_URL.startsWith('http')){
         await fetch(WEBHOOK_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(data)});
       } else { console.log('DEMO (sin webhook):',data); }
-      e.target.style.display='none'; document.getElementById('ok').style.display='block';
+      form.style.display='none'; document.getElementById('ok').style.display='block';
       window.scrollTo({top:0,behavior:'smooth'});
     }catch(err){ btn.disabled=false; alert('Error al enviar / Submit error. Intenta de nuevo.'); }
   });
