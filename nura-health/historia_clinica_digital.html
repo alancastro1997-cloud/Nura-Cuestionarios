@@ -9,10 +9,10 @@
   presencial, en vez de escribir la Historia Clínica Integral en Word y luego
   pegar el texto en el Sheet. Reemplaza ese paso manual de punta a punta:
   al enviar, esto llega directo al mismo pipeline (Code.gs) que ya arma el
-  Plan Integral con Claude, crea/actualiza el expediente del paciente, y
-  genera el documento de consentimiento informado de cada procedimiento marcado
-  SOLO si NURA Health ya tiene su texto validado; si no, el correo al médico lo avisa
-  (ver 05_DOCS/CANDADOS.md).
+  Plan Integral con Claude y crea/actualiza el expediente del paciente.
+  NURA Health no ofrece procedimientos (decisión del titular, 23-sep-2026:
+  solo bioimpedancia y antropometría ISAK 1), así que este formulario ya no
+  captura procedimientos planeados ni genera consentimientos de procedimientos.
 
   Esta NO es la Historia Clínica Integral completa que exige un caso complejo
   de sub-especialidad — es el set de datos de exploración física + ficha de
@@ -220,11 +220,6 @@ document.addEventListener('DOMContentLoaded', function(){
 var TIPO_DE_FORMULARIO = 'historia_digital';
 var DRAFT_KEY = 'hcd_borrador_en_curso';
 
-var PROCEDIMIENTOS_OPCIONES = [
-  "Toxina botulínica (Botox)","Ácido hialurónico","Dermapen / microneedling",
-  "Lipoenzimas","Terapia con células madre","Terapia con exosomas","Implante de placenta",
-  "Péptidos (BPC-157/TB-500/otros)","Bloqueo o infiltración articular","Ninguno por ahora"
-];
 
 function tableRow(obj){ return obj; }
 function presetRows(list){ return list.map(function(r){ return Object.assign({}, r); }); }
@@ -401,11 +396,8 @@ var SECTIONS = [
       {id:"labs_notas", type:"textarea", label:"Notas sobre laboratorio/imagenología", hint:"Fecha, hallazgos relevantes, o qué falta solicitar"}
     ]},
 
-  { id:"diagnostico_plan", eyebrow:"Sección 11", title:"Impresión diagnóstica y procedimientos planeados", fields:[
-      {id:"diagnosticos_medicos", type:"textarea", label:"Impresión diagnóstica", required:true},
-      {id:"procedimientos_planeados", type:"checkbox", label:"Procedimientos planeados en esta visita o próximas",
-        hint:"Si NURA Health ya tiene el texto de consentimiento validado para el procedimiento, se genera el documento para imprimir y firmar. Si no lo tiene, no se genera nada y el correo al médico lo avisa.",
-        options:PROCEDIMIENTOS_OPCIONES}
+  { id:"diagnostico_plan", eyebrow:"Sección 11", title:"Impresión diagnóstica", fields:[
+      {id:"diagnosticos_medicos", type:"textarea", label:"Impresión diagnóstica", required:true}
     ]},
 
   { id:"estrategia_plan", eyebrow:"Sección 12", title:"Estrategia y directrices del plan",
@@ -433,8 +425,6 @@ var SECTIONS = [
       {id:"interaccion_evaluada", type:"textarea", label:"Interacción o alerta que YA evalué (no dejar pendiente)", hint:"Ej.: interacción medicamento-suplemento ya valorada", rows:2},
       {id:"hepatoproteccion_dosis", type:"text", label:"Hepatoprotección / profilaxis lipídica — dosis que fijo", hint:"Dejar vacío = dosis base del sistema si hay farmacología activa"},
       {id:"condicion_particular_manejo", type:"textarea", label:"Condición médica particular + manejo que indico", hint:"Ej.: SOP / hipotiroidismo / HTA / DM2 / dislipidemia + protocolo", rows:2},
-      {id:"consentimiento_estado", type:"text", label:"Estado del consentimiento de procedimientos", hint:"Ej.: firmado en físico (fecha); o pendiente de firma",
-        showIf:function(a){return (a.procedimientos_planeados||[]).some(function(v){return v!=="Ninguno por ahora";});}},
       {id:"labs_estado", type:"text", label:"Estado de laboratorios", hint:"Ej.: ya solicitados (fecha), revisar en próxima visita"},
       {id:"seguimiento_semanas", type:"list", label:"Próxima revisión sugerida", options:["2 semanas","3 semanas","4 semanas","6 semanas","8 semanas","12 semanas"]},
       {id:"indicaciones_particulares", type:"textarea", label:"Otras indicaciones particulares (texto libre)",
@@ -448,9 +438,6 @@ var SECTIONS = [
       {id:"aviso_privacidad_aceptado", type:"confirm", required:true,
         label:"[PENDIENTE: texto de aceptación del Aviso de Privacidad de NURA Health — lo valida el abogado de NURA]"},
       {id:"consentimiento_ia", type:"confirm", required:true, label:"[PENDIENTE: confirmación de que el paciente otorgó su consentimiento EXPRESO para el procesamiento de sus datos de salud con apoyo de un sistema de inteligencia artificial — lo valida el abogado de NURA]"},
-      {id:"consentimiento_procedimientos_confirm", type:"confirm", required:true,
-        label:"[PENDIENTE: texto de confirmación sobre información de riesgos, beneficios y alternativas de los procedimientos marcados — lo valida el abogado de NURA]",
-        showIf:function(a){return (a.procedimientos_planeados||[]).some(function(v){return v!=="Ninguno por ahora";});}},
       {id:"firma_confirma", type:"confirm", required:true,
         label:"Confirmo que esta Historia Clínica fue obtenida mediante interrogatorio directo y exploración física del paciente, y que la información es verídica y completa."}
     ]}
@@ -663,7 +650,7 @@ function renderLanding(){
     '<div class="card">'+
     '<p class="eyebrow">Consulta presencial</p>'+
     '<h2 class="step-title">Historia Clínica Digital</h2>'+
-    '<p class="step-note">Se llena directo en consulta y alimenta el pipeline: Plan Integral con Claude, expediente del paciente, y consentimientos informados de los procedimientos que marques.</p>'+
+    '<p class="step-note">Se llena directo en consulta y alimenta el pipeline: Plan Integral con Claude y expediente del paciente.</p>'+
     '<div class="warn-box">Este formulario no sustituye tu criterio clínico ni ningún consentimiento informado firmado en papel — es la captura estructurada de lo que ya evalúas en consulta.</div>'+
     '<div class="landing-actions">'+
     '<button class="btn btn-primary" onclick="HCD.empezarNueva()">Nueva Historia Clínica</button>'+
@@ -706,7 +693,7 @@ function renderDone(){
     '<div class="card">'+
     '<p class="eyebrow">Listo</p>'+
     '<h2 class="step-title">Historia Clínica enviada</h2>'+
-    '<p class="step-note">Se está generando el Plan Integral, el expediente del paciente y, si existe texto validado, los consentimientos informados de los procedimientos marcados. Revisa tu correo o el Sheet en unos momentos.</p>'+
+    '<p class="step-note">Se está generando el Plan Integral y el expediente del paciente. Revisa tu correo o el Sheet en unos momentos.</p>'+
     '<div class="landing-actions"><button class="btn btn-primary" onclick="HCD.empezarNueva()">Levantar otra Historia Clínica</button></div>'+
     '</div>';
 }
