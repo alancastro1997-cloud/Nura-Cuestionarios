@@ -1,0 +1,901 @@
+<!-- NURA Health - Cuestionarios | Copyright (C) 2026 NURA Cells | SPDX-License-Identifier: AGPL-3.0-or-later -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<style>
+  :root{
+    --bg:#F3F5F3;
+    --surface:#FFFFFF;
+    --ink:#10221F;
+    --ink-soft:#55655F;
+    --ink-faint:#94A29C;
+    --accent:#404040;
+    --accent-dark:#262626;
+    --accent-soft:#E4F2EE;
+    --gold:#A1A1AA;
+    --line:#DEE5E1;
+    --danger:#B4483C;
+    --radius:14px;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;}
+  #qfh-root{
+    font-family:'Inter',sans-serif;
+    color:var(--ink);
+    background:var(--bg);
+    min-height:100vh;
+    padding:28px 16px 60px;
+    line-height:1.5;
+  }
+  #qfh-root .wrap{max-width:660px;margin:0 auto;}
+  .brand{
+    display:flex;align-items:baseline;justify-content:space-between;
+    margin-bottom:22px;flex-wrap:wrap;gap:6px;
+  }
+  .brand-name{
+    font-family:'Space Grotesk',sans-serif;font-weight:700;
+    font-size:15px;letter-spacing:.06em;color:var(--ink);
+  }
+  .brand-tag{
+    font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--ink-faint);
+    letter-spacing:.02em;
+  }
+
+  /* orbital progress */
+  .orbit-wrap{margin:8px 0 26px;}
+  .orbit-track{display:flex;align-items:center;gap:0;}
+  .orbit-node{
+    width:9px;height:9px;border-radius:50%;background:var(--line);
+    flex:0 0 auto;transition:background .25s, transform .25s;position:relative;
+  }
+  .orbit-node.done{background:var(--accent);}
+  .orbit-node.current{
+    background:var(--surface);border:2px solid var(--accent);width:11px;height:11px;
+    box-shadow:0 0 0 4px var(--accent-soft);
+  }
+  .orbit-line{flex:1 1 auto;height:1px;background:var(--line);min-width:6px;}
+  .orbit-line.done{background:var(--accent);}
+  .orbit-caption{
+    font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--ink-faint);
+    margin-top:8px;
+  }
+
+  .card{
+    background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);
+    padding:28px 26px;box-shadow:0 1px 2px rgba(16,34,31,.04);
+  }
+  .eyebrow{
+    font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.08em;
+    color:var(--accent-dark);text-transform:uppercase;margin:0 0 6px;
+  }
+  h2.step-title{
+    font-family:'Space Grotesk',sans-serif;font-size:22px;font-weight:600;
+    margin:0 0 4px;color:var(--ink);
+  }
+  .step-note{color:var(--ink-soft);font-size:13.5px;margin:0 0 22px;}
+
+  .field{margin-bottom:20px;}
+  .field label.q{
+    display:block;font-weight:600;font-size:14.5px;margin-bottom:5px;color:var(--ink);
+  }
+  .field .hint{
+    font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:var(--ink-faint);
+    margin:2px 0 8px;
+  }
+  input[type=text], input[type=date], input[type=number], textarea, select{
+    width:100%;font-family:'Inter',sans-serif;font-size:14.5px;color:var(--ink);
+    background:#FBFCFB;border:1px solid var(--line);border-radius:9px;
+    padding:10px 12px;outline:none;transition:border-color .15s, background .15s;
+  }
+  input:focus, textarea:focus, select:focus{border-color:var(--accent);background:#fff;}
+  textarea{min-height:76px;resize:vertical;font-family:'Inter',sans-serif;}
+
+  .chip-grid{display:flex;flex-wrap:wrap;gap:8px;}
+  .chip{
+    font-family:'Inter',sans-serif;font-size:13.5px;color:var(--ink);
+    background:#FBFCFB;border:1px solid var(--line);border-radius:999px;
+    padding:8px 14px;cursor:pointer;user-select:none;transition:all .15s;
+  }
+  .chip:hover{border-color:var(--accent);}
+  .chip.selected{background:var(--accent-soft);border-color:var(--accent);color:var(--accent-dark);font-weight:600;}
+
+  .scale-row{display:flex;gap:5px;margin-bottom:6px;}
+  .scale-btn{
+    flex:1;text-align:center;padding:9px 0;border:1px solid var(--line);border-radius:8px;
+    font-family:'IBM Plex Mono',monospace;font-size:13px;cursor:pointer;background:#FBFCFB;
+  }
+  .scale-btn.selected{background:var(--accent);color:#fff;border-color:var(--accent);}
+  .scale-labels{display:flex;justify-content:space-between;font-size:11.5px;color:var(--ink-faint);font-style:italic;}
+
+  table.med-table{width:100%;border-collapse:collapse;margin-bottom:10px;}
+  table.med-table th{
+    font-family:'IBM Plex Mono',monospace;font-size:10.5px;text-transform:uppercase;
+    color:var(--ink-faint);text-align:left;padding:4px 6px;font-weight:500;
+  }
+  table.med-table td{padding:4px 6px;}
+  table.med-table input{padding:7px 9px;font-size:13.5px;}
+  .row-remove{
+    background:none;border:none;color:var(--danger);cursor:pointer;font-size:16px;
+    padding:0 6px;
+  }
+  .add-row-btn{
+    font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--accent-dark);
+    background:none;border:1px dashed var(--accent);border-radius:8px;padding:6px 12px;
+    cursor:pointer;
+  }
+
+  .nav-row{display:flex;justify-content:space-between;align-items:center;margin-top:28px;gap:10px;}
+  .btn{
+    font-family:'Inter',sans-serif;font-weight:600;font-size:14px;border-radius:9px;
+    padding:11px 20px;cursor:pointer;border:none;transition:opacity .15s, transform .1s;
+  }
+  .btn:active{transform:scale(.98);}
+  .btn-primary{background:var(--accent);color:#fff;}
+  .btn-primary:hover{background:var(--accent-dark);}
+  .btn-ghost{background:none;color:var(--ink-soft);border:1px solid var(--line);}
+  .btn-ghost:hover{border-color:var(--ink-faint);}
+  .btn:disabled{opacity:.45;cursor:not-allowed;}
+
+  .autosave{
+    font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--ink-faint);
+    text-align:center;margin-top:14px;min-height:14px;transition:opacity .3s;
+  }
+
+  .landing-actions{display:flex;flex-direction:column;gap:12px;margin-top:22px;}
+  .link-box{
+    background:var(--accent-soft);border:1px solid var(--accent);border-radius:10px;
+    padding:14px 16px;font-family:'IBM Plex Mono',monospace;font-size:12.5px;
+    word-break:break-all;color:var(--accent-dark);
+  }
+  .footer-link{
+    text-align:center;margin-top:22px;font-size:12px;color:var(--ink-faint);
+  }
+  .footer-link a{color:var(--ink-faint);cursor:pointer;text-decoration:underline;}
+
+  .required-mark{color:var(--danger);}
+  .confirm-box{
+    background:var(--accent-soft);border:1px solid var(--accent);border-radius:10px;
+    padding:16px;display:flex;gap:10px;align-items:flex-start;margin-top:6px;
+  }
+  .confirm-box input{width:auto;margin-top:3px;}
+
+  .dash-row{
+    display:flex;justify-content:space-between;align-items:center;padding:12px 4px;
+    border-bottom:1px solid var(--line);cursor:pointer;
+  }
+  .dash-row:hover{background:var(--accent-soft);}
+  .dash-name{font-weight:600;font-size:14px;}
+  .dash-meta{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--ink-faint);}
+  .badge{
+    font-family:'IBM Plex Mono',monospace;font-size:10px;text-transform:uppercase;
+    padding:3px 8px;border-radius:999px;letter-spacing:.04em;
+  }
+  .badge.completo{background:var(--accent-soft);color:var(--accent-dark);}
+  .badge.borrador{background:#F3EBD9;color:var(--gold);}
+
+  .summary-block{margin-bottom:18px;}
+  .summary-block h4{
+    font-family:'Space Grotesk',sans-serif;font-size:14px;margin:0 0 8px;
+    color:var(--accent-dark);border-bottom:1px solid var(--line);padding-bottom:6px;
+  }
+  .summary-item{font-size:13.5px;margin-bottom:6px;}
+  .summary-item .k{color:var(--ink-soft);}
+  .summary-item .v{font-weight:500;}
+
+  @media (prefers-reduced-motion: reduce){
+    *{transition:none !important;}
+  }
+</style>
+
+<div id="qfh-root"><div class="wrap" id="qfh-app">Cargando…</div></div>
+
+<script>
+(function(){
+
+// Polyfill de almacenamiento: window.storage no existe en un navegador real
+// (solo existía en el entorno de vista previa donde se armó este formulario).
+// Esta versión usa localStorage, que sí está disponible en cualquier
+// navegador real (Chrome, Safari, Edge, etc.), con la misma forma de uso
+// (set/get/list que devuelven promesas) para no tener que tocar el resto
+// del código de autoguardado.
+if (!window.storage) {
+  window.storage = {
+    set: function (key, value) {
+      try { localStorage.setItem(key, value); return Promise.resolve(); }
+      catch (e) { return Promise.reject(e); }
+    },
+    get: function (key) {
+      try { return Promise.resolve({ value: localStorage.getItem(key) }); }
+      catch (e) { return Promise.reject(e); }
+    },
+    list: function (prefix) {
+      try {
+        var keys = [];
+        for (var i = 0; i < localStorage.length; i++) {
+          var k = localStorage.key(i);
+          if (k && k.indexOf(prefix) === 0) keys.push(k);
+        }
+        return Promise.resolve({ keys: keys });
+      } catch (e) { return Promise.reject(e); }
+    }
+  };
+}
+
+var CLINIC_PASSCODE = 'PEGAR_CODIGO_EQUIPO_NURA_HEALTH';
+// ⚠️ Este código vive en el HTML y cualquiera lo lee con «Ver código fuente».
+// Solo evita que un paciente entre por error al panel de borradores de ESTE
+// navegador; NO es un control de seguridad. Mientras diga PEGAR_…, el panel no abre.
+
+// Pipeline de NURA Health (Apps Script) — pegar aquí la URL que da Apps Script
+// al publicar el Web App (05_DOCS/DESPLIEGUE.md). Termina en /exec
+var NH_ENDPOINT = 'PEGAR_URL_EXEC_NURA_HEALTH';
+
+// ===== Candados de NURA Health (ver 05_DOCS/CANDADOS.md) =====================
+// El cuestionario NO envía mientras falte la URL del sistema o quede cualquier
+// texto legal [PENDIENTE]. Sin URL el envío se pierde en silencio (mode:no-cors
+// nunca lee la respuesta); sin texto legal se recogerían datos de salud bajo un
+// aviso que no existe. Las dos fallas caen del lado seguro: no se envía nada.
+function nhMotivoDeBloqueo_(){
+  if (/^PEGAR_/.test(NH_ENDPOINT)) return "este cuestionario todavía no está conectado al sistema de NURA Health.";
+  if (/\[PENDIENTE/.test(JSON.stringify(SECTIONS))) return "falta el texto legal de NURA Health (Aviso de Privacidad y consentimiento). No escribas datos todavía: no se van a poder enviar.";
+  return null;
+}
+document.addEventListener('DOMContentLoaded', function(){
+  var m = nhMotivoDeBloqueo_(); if (!m) return;
+  var d = document.createElement('div');
+  d.setAttribute('role', 'alert');
+  d.style.cssText = 'position:sticky;top:0;z-index:9999;background:#fff4e5;color:#5c3d00;border-bottom:2px solid #b26a00;padding:12px 16px;font:600 14px/1.4 system-ui,sans-serif;text-align:center';
+  d.textContent = 'CUESTIONARIO NO OPERATIVO — ' + m;
+  document.body.insertBefore(d, document.body.firstChild);
+});
+var TIPO_DE_FORMULARIO = 'inicial';
+
+var SECTIONS = [
+  { id:"contacto", eyebrow:"Antes de comenzar", title:"Tus datos de contacto",
+    note:"Esta información es confidencial y de uso exclusivo para tu consulta clínica.",
+    fields:[
+      {id:"nombre_completo", type:"text", label:"Nombre completo", required:true},
+      {id:"fecha_consulta", type:"date", label:"Fecha de consulta", required:true, defaultToday:true},
+      {id:"whatsapp", type:"text", label:"WhatsApp", required:true},
+      {id:"correo", type:"text", label:"Correo electrónico", required:true},
+      {id:"tipo_consulta", type:"radio", label:"Tipo de consulta", required:true,
+        options:["Primera vez","Subsecuente"]},
+      {id:"modalidad", type:"radio", label:"Modalidad de consulta", required:true,
+        options:["Presencial","En línea (videollamada)"]}
+    ]},
+  { id:"personales", eyebrow:"Sección 1", title:"Datos personales", fields:[
+      {id:"fecha_nacimiento", type:"date", label:"Fecha de nacimiento", required:true},
+      {id:"ciudad_residencia", type:"text", label:"Ciudad y estado de residencia"},
+      {id:"ocupacion", type:"text", label:"Ocupación / actividad principal"},
+      {id:"sexo_biologico", type:"radio", label:"Sexo biológico", required:true,
+        options:["Masculino","Femenino"]}
+    ]},
+  { id:"cuerpo", eyebrow:"Sección 2", title:"Tu cuerpo hoy", fields:[
+      {id:"peso_actual", type:"number", label:"Peso actual", hint:"kg (30–250 kg)", min:30, max:250},
+      {id:"talla", type:"number", label:"Talla", hint:"cm (130–220 cm)", min:130, max:220},
+      {id:"inbody_disponible", type:"radio", label:"¿Tienes resultados de InBody u otra bioimpedancia?",
+        options:["Sí, los tengo listos","Sí, los busco para la cita","No tengo"]},
+      {id:"inbody_grasa", type:"number", label:"% Grasa corporal",
+        showIf:function(a){return a.inbody_disponible==="Sí, los tengo listos";}},
+      {id:"inbody_musculo", type:"number", label:"Masa muscular (kg)",
+        showIf:function(a){return a.inbody_disponible==="Sí, los tengo listos";}},
+      {id:"inbody_visceral", type:"number", label:"Grasa visceral (nivel)",
+        showIf:function(a){return a.inbody_disponible==="Sí, los tengo listos";}},
+      {id:"cintura", type:"number", label:"Cintura mínima (cm)"},
+      {id:"cadera", type:"number", label:"Cadera (cm)"},
+      {id:"composicion_ideal", type:"textarea", label:"¿Cuál es tu peso o composición corporal ideal?",
+        hint:"Aproximado está bien — p. ej. 70 kg, 15% de grasa, ganar 5 kg de músculo"}
+    ]},
+  { id:"historial", eyebrow:"Sección 3", title:"Historial médico", fields:[
+      {id:"diagnosticos", type:"textarea", label:"¿Tienes o has tenido algún diagnóstico médico?",
+        hint:"Enfermedades crónicas, condiciones hormonales, síndromes, lesiones importantes…"},
+      {id:"cirugias", type:"textarea", label:"¿Has tenido cirugías, procedimientos o lesiones relevantes?",
+        hint:"Incluye año si lo recuerdas. Escribe 'ninguno' si no aplica."},
+      {id:"lesion_activa", type:"textarea", label:"¿Tienes alguna lesión activa que limite tu movimiento actualmente?"},
+      {id:"alergias", type:"checkbox", label:"Alergias conocidas", hint:"Selecciona todas las que apliquen",
+        options:["Medicamentos (especificar abajo)","Alimentos (especificar abajo)","Látex","Contraste / yodo","Picaduras de insectos","Ninguna conocida"]},
+      {id:"alergenos_detalle", type:"textarea", label:"Especificar alérgenos",
+        showIf:function(a){return (a.alergias||[]).some(function(v){return v.indexOf("especificar")>-1;});}},
+      {id:"antecedentes_familiares", type:"checkbox", label:"Antecedentes familiares directos",
+        hint:"Padre, madre, hermanos, abuelos — selecciona todos los que apliquen",
+        options:["DM2 (diabetes)","HTA (hipertensión)","Obesidad","Dislipidemia","Enfermedad cardiovascular","Cáncer","Osteoporosis","Otras","Ninguno"]}
+    ]},
+  { id:"medicamentos", eyebrow:"Sección 4", title:"Medicamentos y suplementos", fields:[
+      {id:"toma_medicamento", type:"radio", label:"¿Tomas algún medicamento actualmente?", options:["Sí","No"]},
+      {id:"medicamentos_tabla", type:"table", label:"Anota tus medicamentos actuales",
+        columns:[["nombre","Medicamento / suplemento"],["dosis","Dosis"],["frecuencia","Frecuencia / indicación"]],
+        showIf:function(a){return a.toma_medicamento==="Sí";}},
+      {id:"usa_suplemento", type:"radio", label:"¿Usas algún suplemento actualmente?",
+        hint:"Proteína, creatina, vitaminas, colágeno, omega-3, etc.", options:["Sí","No"]},
+      {id:"suplementos_detalle", type:"textarea", label:"Anota tus suplementos",
+        hint:"Nombre, dosis y frecuencia aproximada de cada uno",
+        showIf:function(a){return a.usa_suplemento==="Sí";}}
+    ]},
+  { id:"femenina", eyebrow:"Sección 5", title:"Salud femenina",
+    note:"Sección exclusiva para pacientes femeninas.",
+    visibleIf:function(a){return a.sexo_biologico==="Femenino";},
+    fields:[
+      {id:"ciclo_menstrual", type:"radio", label:"¿Cómo es tu ciclo menstrual?",
+        options:["Regular (cada 21–35 días)","Irregular","Ausente (amenorrea)","Perimenopausia / menopausia"]},
+      {id:"fum", type:"date", label:"Fecha de última menstruación (FUM)"},
+      {id:"embarazos", type:"text", label:"Embarazos / partos / cesáreas"},
+      {id:"anticonceptivo", type:"checkbox", label:"¿Usas algún método anticonceptivo actualmente?",
+        options:["Píldora hormonal","DIU hormonal","DIU de cobre","Parche / inyección hormonal","Implante subdérmico","Ninguno"]},
+      {id:"anticonceptivo_otro", type:"text", label:"Otro método / especificar"},
+      {id:"lactancia", type:"radio", label:"¿Estás en período de lactancia actualmente?", options:["Sí","No"]},
+      {id:"sintomas_hormonales", type:"checkbox", label:"Síntomas hormonales actuales", hint:"Selecciona todos los que apliquen",
+        options:["Acné","Hirsutismo / vello excesivo","Irregularidad menstrual","Dificultad para bajar de peso","Caída de cabello","Bochornos / sofocos","Cambios bruscos de humor","Retención de líquidos","Ninguno"]}
+    ]},
+  { id:"alimentacion", eyebrow:"Sección 6", title:"Hábitos de alimentación", fields:[
+      {id:"plan_alimentacion", type:"radio", label:"¿Sigues actualmente algún plan de alimentación?",
+        options:["Sí, tengo un plan activo","Lo intento por mi cuenta","No sigo ninguno","He tenido planes pero no los sostengo"]},
+      {id:"comidas_dia", type:"number", label:"Comidas al día (promedio)", hint:"comidas/día (1–7)", min:1, max:7},
+      {id:"cocina_casa", type:"radio", label:"¿Con qué frecuencia cocinas en casa?",
+        options:["Casi siempre en casa","Mitad en casa, mitad fuera","Mayormente fuera de casa","Casi nunca cocino"]},
+      {id:"alimentos_evita", type:"checkbox", label:"Alimentos que NO consumes",
+        hint:"Por alergia, intolerancia o preferencia — selecciona todos los que apliquen",
+        options:["Carne roja","Cerdo","Mariscos / pescado","Pollo","Lácteos","Gluten / trigo","Huevo","Leguminosas","Nada — como de todo"]},
+      {id:"agua_dia", type:"number", label:"Agua al día (promedio)", hint:"litros/día (0.5–5 L)", min:0.5, max:5, step:0.1},
+      {id:"sustancias", type:"textarea", label:"¿Consumes alcohol, tabaco u otras sustancias?",
+        hint:"Frecuencia aproximada — escribe 'ninguna' si no consumes"},
+      {id:"gastrointestinal", type:"checkbox", label:"Problemas gastrointestinales frecuentes",
+        options:["Ninguno","Inflamación / distensión","Gases frecuentes","Estreñimiento","Reflujo / acidez","Diarrea frecuente","Náuseas frecuentes"]}
+    ]},
+  { id:"actividad", eyebrow:"Sección 7", title:"Actividad física", fields:[
+      {id:"entrena_actualmente", type:"radio", label:"¿Entrenas actualmente?",
+        options:["Sí, con constancia","A veces / de forma irregular","Apenas voy a empezar","No entreno"]},
+      {id:"tipo_actividad", type:"checkbox", label:"Tipo de actividad física que realizas", hint:"Selecciona todas las que apliquen",
+        options:["Pesas / musculación","Cardio (correr, bici, elíptica)","Deportes de equipo","Artes marciales / combate","CrossFit / funcional","Yoga / pilates","Natación","Running / ciclismo outdoor","Ninguno actualmente"]},
+      {id:"dias_entrenamiento", type:"number", label:"Días de entrenamiento por semana", hint:"días/semana (1–7)", min:1, max:7},
+      {id:"duracion_sesion", type:"radio", label:"Duración habitual de cada sesión",
+        options:["Menos de 30 min","30–60 min","60–90 min","Más de 90 min"]},
+      {id:"nivel_experiencia", type:"radio", label:"Nivel de experiencia en entrenamiento",
+        options:["Sin experiencia","Principiante (menos de 1 año)","Intermedio (1–3 años)","Avanzado (más de 3 años)","Atleta de alto rendimiento"]},
+      {id:"horario_preferido", type:"radio", label:"Horario preferido de entrenamiento",
+        options:["Mañana","Mediodía","Tarde","Noche","Variable / sin preferencia"]},
+      {id:"acceso_entreno", type:"radio", label:"¿Dónde entrenas o tienes acceso?",
+        options:["Gimnasio completo (todo el equipo)","Gimnasio básico","En casa (con o sin equipo)","Al aire libre / parque","Sin acceso a gimnasio aún"]},
+      {id:"antecedentes_deportivos", type:"textarea", label:"Antecedentes deportivos",
+        hint:"Deportes practicados, competencias, época activa. Escribe 'ninguno' si no aplica."}
+    ]},
+  { id:"sueno", eyebrow:"Sección 8", title:"Sueño y bienestar", fields:[
+      {id:"horas_sueno", type:"number", label:"Horas de sueño por noche (promedio)", hint:"horas/noche (3–12 h)", min:3, max:12},
+      {id:"calidad_sueno", type:"scale", label:"Calidad del sueño", left:"Muy malo", right:"Excelente"},
+      {id:"turno_nocturno", type:"radio", label:"¿Trabajas en turno nocturno o con horario irregular?",
+        options:["Sí, regularmente","Ocasionalmente","No"]},
+      {id:"nivel_estres", type:"scale", label:"Nivel de estrés actual", left:"Sin estrés", right:"Estrés máximo"},
+      {id:"fuentes_estres", type:"checkbox", label:"Principales fuentes de estrés", hint:"Selecciona todas las que apliquen",
+        options:["Trabajo / laboral","Estudios / academia","Finanzas","Relaciones personales","Salud propia","Familia","Varios / otros"]}
+    ]},
+  { id:"objetivos", eyebrow:"Sección 9", title:"Tus objetivos", fields:[
+      {id:"objetivo_principal", type:"checkbox", label:"Objetivo principal", hint:"Puedes marcar más de uno",
+        options:["Perder grasa corporal","Ganar músculo","Recomposición corporal","Salud metabólica / hormonal","Rendimiento atlético","Longevidad y bienestar","Rehabilitación / recuperación","Preparación para competencia","Medicina estética / apariencia","Control de una enfermedad"]},
+      {id:"fecha_evento", type:"text", label:"Fecha límite o evento específico", hint:"Competencia, boda, viaje, evento social…"},
+      {id:"estrategia_previa", type:"textarea", label:"¿Qué estrategia ya tenías pensada?",
+        hint:"Tipo de dieta, rutina, suplementos que ibas a usar, qué habías investigado…"},
+      {id:"intentos_fallidos", type:"textarea", label:"¿Qué has intentado antes que no haya funcionado o no hayas podido sostener?"}
+    ]},
+  { id:"atletico", eyebrow:"Sección 10 · Opcional", title:"Perfil atlético",
+    note:"Para atletas avanzados y de alto rendimiento. Si no aplica, deja en blanco.",
+    fields:[
+      {id:"disciplina_competencia", type:"textarea", label:"Disciplina y categoría de competencia"},
+      {id:"uso_farmacologico", type:"radio", label:"¿Has usado algún compuesto farmacológico para rendimiento?",
+        hint:"Esteroides anabólicos, péptidos, hormona de crecimiento, SARMs, etc.",
+        options:["Sí, con supervisión médica","Sí, por cuenta propia","No","Prefiero comentarlo en consulta"]},
+      {id:"estado_ciclo", type:"radio", label:"Estado actual",
+        options:["Fuera de ciclo (off)","En ciclo activo (on)","Post-ciclo / TPC","No aplica"]},
+      {id:"objetivo_temporada", type:"radio", label:"Objetivo de tu temporada actual",
+        options:["Volumen / ganancia de masa","Definición / cutting","Recomposición corporal","Preparación directa para competencia"]},
+      {id:"labs_recientes_atletico", type:"radio", label:"¿Tienes estudios de laboratorio recientes?",
+        options:["Sí, los llevo a consulta","Sí, los envío por adelantado","No tengo aún"]},
+      {id:"notas_uso", type:"textarea", label:"Notas adicionales sobre tu historial de uso",
+        hint:"Compuestos previos, dosis, duración de ciclos — solo si deseas compartirlo"}
+    ]},
+  { id:"laboratorio", eyebrow:"Sección 11", title:"Estudios de laboratorio", fields:[
+      {id:"labs_disponibles", type:"radio", label:"¿Tienes estudios de laboratorio disponibles?",
+        options:["Sí, los llevaré a la consulta","Sí, los envío por adelantado a mi médico","Tengo algunos, los busco","No tengo estudios recientes"]},
+      {id:"fecha_labs", type:"text", label:"Fecha de los estudios", hint:"Mes y año aproximado"},
+      {id:"labs_tipo", type:"checkbox", label:"Estudios disponibles", hint:"Marca todos los que tengas",
+        options:["BHC (biometría hemática)","Química sanguínea (QS6)","Función hepática (TGO/TGP/GGT)","Perfil de lípidos","Glucosa / insulina / HOMA-IR","HbA1c","TSH / T3 libre / T4","Testosterona total y libre","Estradiol / progesterona","Cortisol matutino","Vitamina D3 (25-OH)","B12 / ácido fólico","Ferritina / hierro sérico","PCR ultrasensible / homocisteína","EGO (examen general de orina)","Otros"]},
+      {id:"algo_mas", type:"textarea", label:"¿Hay algo más que quieras que tu médico sepa antes de tu consulta?",
+        hint:"Cualquier detalle adicional, pregunta específica o preocupación"}
+    ]},
+  { id:"firma", eyebrow:"Último paso", title:"Confirmación",
+    note:"[PENDIENTE: resumen del Aviso de Privacidad de NURA Health. Lo redacta y valida el abogado de NURA. Debe declarar el tratamiento de datos de salud para elaborar el plan, el uso de un proveedor de inteligencia artificial como encargado que procesa esos datos, y el consentimiento expreso por separado. Mientras este texto no exista, este cuestionario no envía.]",
+    fields:[
+      {id:"firma_nombre", type:"text", label:"Nombre completo (firma digital)", required:true},
+      {id:"aviso_privacidad_aceptado", type:"confirm", label:"[PENDIENTE: texto de aceptación del Aviso de Privacidad de NURA Health — lo valida el abogado de NURA]", required:true},
+      {id:"consentimiento_ia", type:"confirm", required:true, label:"[PENDIENTE: texto de consentimiento EXPRESO para que los datos de salud se procesen con apoyo de un sistema de inteligencia artificial — lo valida el abogado de NURA]"},
+      {id:"firma_confirma", type:"confirm", label:"Confirmo que la información proporcionada es verídica y completa, y entiendo que será usada para el diseño de mi plan clínico.", required:true}
+    ]}
+];
+
+function fieldById(id){
+  for (var s=0;s<SECTIONS.length;s++){
+    for (var f=0;f<SECTIONS[s].fields.length;f++){
+      if (SECTIONS[s].fields[f].id===id) return SECTIONS[s].fields[f];
+    }
+  }
+  return null;
+}
+
+// ---------- state ----------
+var state = {
+  view:"loading",      // loading | landing | form | done | dashboard | dash-detail
+  id:null,
+  answers:{},
+  step:0,
+  dashList:[],
+  dashDetail:null,
+  saveMsg:""
+};
+
+function uid(){
+  return Date.now().toString(36)+Math.random().toString(36).slice(2,8);
+}
+
+function getVisibleSections(){
+  return SECTIONS.filter(function(s){ return !s.visibleIf || s.visibleIf(state.answers); });
+}
+
+function esc(str){
+  return String(str==null?"":str).replace(/[&<>"]/g, function(c){
+    return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];
+  });
+}
+
+// ---------- storage ----------
+function debounce(fn, ms){
+  var t; return function(){ var args=arguments; clearTimeout(t); t=setTimeout(function(){fn.apply(null,args);}, ms); };
+}
+
+var doAutosave = debounce(function(){
+  saveDraft();
+}, 700);
+
+function saveDraft(){
+  if(!state.id) return;
+  var payload = {
+    id: state.id,
+    answers: state.answers,
+    status: "borrador",
+    updatedAt: new Date().toISOString()
+  };
+  window.storage.set("submission:"+state.id, JSON.stringify(payload), true).then(function(){
+    state.saveMsg = "Guardado ✓";
+    renderSaveMsg();
+    setTimeout(function(){ state.saveMsg=""; renderSaveMsg(); }, 1500);
+  }).catch(function(){
+    state.saveMsg = "No se pudo guardar. Revisa tu conexión.";
+    renderSaveMsg();
+  });
+}
+
+function finalizeSubmission(){
+  var nhBloqueo = nhMotivoDeBloqueo_();
+  if (nhBloqueo) { var nhErr = new Error(nhBloqueo); nhErr.nhBloqueo = true; return Promise.reject(nhErr); }
+  // Enviar los datos al pipeline de NURA Health (Apps Script) en vez de a Formspree.
+  // mode:'no-cors' es intencional (Regla 16: el paciente nunca ve el plan
+  // generado, así que no necesitamos leer la respuesta del servidor).
+  var payload = Object.assign({}, state.answers, { formType: TIPO_DE_FORMULARIO });
+  return fetch(NH_ENDPOINT, {
+    method: "POST",
+    mode: "no-cors",
+    headers: { "Content-Type": "text/plain;charset=utf-8" },
+    body: JSON.stringify(payload)
+  });
+}
+
+function loadDraft(id){
+  return window.storage.get("submission:"+id, true).then(function(res){
+    if(res && res.value){
+      var data = JSON.parse(res.value);
+      state.answers = data.answers || {};
+    }
+  }).catch(function(){ /* no existing draft yet, that's fine */ });
+}
+
+// ---------- routing / init ----------
+function parseHash(){
+  var h = window.location.hash || "";
+  var m = h.match(/id=([a-z0-9]+)/i);
+  return m ? m[1] : null;
+}
+
+function init(){
+  var existingId = parseHash();
+  if (existingId){
+    state.id = existingId;
+    loadDraft(existingId).then(function(){
+      applyDefaults();
+      state.view = "form";
+      render();
+    });
+  } else {
+    state.view = "landing";
+    render();
+  }
+}
+
+function startNewPatientLink(){
+  state.id = uid();
+  window.location.hash = "id="+state.id;
+  state.answers = {};
+  state.step = 0;
+  applyDefaults();
+  state.view = "form-share";
+  render();
+}
+
+function goToDashboard(){
+  if (/^PEGAR_/.test(CLINIC_PASSCODE)) { alert("El acceso del equipo no está configurado en este cuestionario."); return; }
+  var pass = window.prompt("Acceso equipo clínico — código:");
+  if (pass !== CLINIC_PASSCODE){
+    if (pass !== null) alert("Código incorrecto.");
+    return;
+  }
+  state.view = "dashboard";
+  state.dashList = [];
+  render();
+  window.storage.list("submission:", true).then(function(res){
+    var keys = (res && res.keys) || [];
+    var promises = keys.map(function(k){
+      return window.storage.get(k, true).then(function(r){
+        try { return JSON.parse(r.value); } catch(e){ return null; }
+      }).catch(function(){ return null; });
+    });
+    Promise.all(promises).then(function(list){
+      state.dashList = list.filter(Boolean).sort(function(a,b){
+        return (b.updatedAt||"").localeCompare(a.updatedAt||"");
+      });
+      render();
+    });
+  });
+}
+
+// ---------- validation ----------
+function sectionErrors(section){
+  var errs = [];
+  section.fields.forEach(function(f){
+    if (f.showIf && !f.showIf(state.answers)) return;
+    if (!f.required) return;
+    var v = state.answers[f.id];
+    if (f.type==="confirm"){ if(!v) errs.push(f.id); return; }
+    if (v===undefined || v===null || v===""){ errs.push(f.id); }
+  });
+  return errs;
+}
+
+// ---------- render: field ----------
+function renderField(f){
+  if (f.showIf && !f.showIf(state.answers)) return "";
+  var val = state.answers[f.id];
+  var reqMark = f.required ? ' <span class="required-mark">*</span>' : "";
+  var hint = f.hint ? '<div class="hint">'+esc(f.hint)+'</div>' : "";
+
+  if (f.type==="text" || f.type==="date"){
+    return '<div class="field">'+
+      '<label class="q">'+esc(f.label)+reqMark+'</label>'+hint+
+      '<input type="'+f.type+'" data-fid="'+f.id+'" value="'+esc(val||"")+'" '+
+      'oninput="QFH.onTextInput(\''+f.id+'\', this.value)">'+
+      '</div>';
+  }
+  if (f.type==="number"){
+    return '<div class="field">'+
+      '<label class="q">'+esc(f.label)+reqMark+'</label>'+hint+
+      '<input type="number" min="'+(f.min!=null?f.min:"")+'" max="'+(f.max!=null?f.max:"")+'" step="'+(f.step||1)+'" '+
+      'data-fid="'+f.id+'" value="'+esc(val||"")+'" oninput="QFH.onTextInput(\''+f.id+'\', this.value)">'+
+      '</div>';
+  }
+  if (f.type==="textarea"){
+    return '<div class="field">'+
+      '<label class="q">'+esc(f.label)+reqMark+'</label>'+hint+
+      '<textarea data-fid="'+f.id+'" oninput="QFH.onTextInput(\''+f.id+'\', this.value)">'+esc(val||"")+'</textarea>'+
+      '</div>';
+  }
+  if (f.type==="radio"){
+    var chips = f.options.map(function(o){
+      var sel = val===o ? " selected":"";
+      return '<div class="chip'+sel+'" onclick="QFH.onChoice(\''+f.id+'\',\''+esc(o).replace(/'/g,"\\'")+'\',false)">'+esc(o)+'</div>';
+    }).join("");
+    return '<div class="field"><label class="q">'+esc(f.label)+reqMark+'</label>'+hint+'<div class="chip-grid">'+chips+'</div></div>';
+  }
+  if (f.type==="checkbox"){
+    var arr = val || [];
+    var chips2 = f.options.map(function(o){
+      var sel = arr.indexOf(o)>-1 ? " selected":"";
+      return '<div class="chip'+sel+'" onclick="QFH.onChoice(\''+f.id+'\',\''+esc(o).replace(/'/g,"\\'")+'\',true)">'+esc(o)+'</div>';
+    }).join("");
+    return '<div class="field"><label class="q">'+esc(f.label)+reqMark+'</label>'+hint+'<div class="chip-grid">'+chips2+'</div></div>';
+  }
+  if (f.type==="scale"){
+    var n = val || null;
+    var btns = "";
+    for (var i=1;i<=10;i++){
+      btns += '<div class="scale-btn'+(n==i?" selected":"")+'" onclick="QFH.onChoice(\''+f.id+'\','+i+',false)">'+i+'</div>';
+    }
+    return '<div class="field"><label class="q">'+esc(f.label)+reqMark+'</label>'+
+      '<div class="scale-row">'+btns+'</div>'+
+      '<div class="scale-labels"><span>'+esc(f.left)+'</span><span>'+esc(f.right)+'</span></div></div>';
+  }
+  if (f.type==="table"){
+    var rows = val || [];
+    var head = '<tr>'+f.columns.map(function(c){return '<th>'+esc(c[1])+'</th>';}).join("")+'<th></th></tr>';
+    var body = rows.map(function(row, idx){
+      return '<tr>'+f.columns.map(function(c){
+        return '<td><input type="text" value="'+esc(row[c[0]]||"")+'" oninput="QFH.onTableInput(\''+f.id+'\','+idx+',\''+c[0]+'\',this.value)"></td>';
+      }).join("")+'<td><button type="button" class="row-remove" onclick="QFH.onTableRemove(\''+f.id+'\','+idx+')">✕</button></td></tr>';
+    }).join("");
+    return '<div class="field"><label class="q">'+esc(f.label)+reqMark+'</label>'+
+      '<table class="med-table"><thead>'+head+'</thead><tbody>'+body+'</tbody></table>'+
+      '<button type="button" class="add-row-btn" onclick="QFH.onTableAdd(\''+f.id+'\')">+ agregar renglón</button></div>';
+  }
+  if (f.type==="confirm"){
+    var checked = val ? "checked" : "";
+    return '<div class="confirm-box"><input type="checkbox" '+checked+' onchange="QFH.onConfirm(\''+f.id+'\',this.checked)">'+
+      '<label style="font-size:13.5px;color:var(--ink-soft);">'+esc(f.label)+'</label></div>';
+  }
+  return "";
+}
+
+// ---------- render: orbit ----------
+function renderOrbit(){
+  var secs = getVisibleSections();
+  var nodes = "";
+  secs.forEach(function(s, i){
+    var cls = i < state.step ? "done" : (i===state.step ? "current" : "");
+    nodes += '<div class="orbit-node '+cls+'"></div>';
+    if (i < secs.length-1){
+      nodes += '<div class="orbit-line '+(i<state.step?"done":"")+'"></div>';
+    }
+  });
+  return '<div class="orbit-wrap"><div class="orbit-track">'+nodes+'</div>'+
+    '<div class="orbit-caption">PASO '+(state.step+1)+' DE '+secs.length+'</div></div>';
+}
+
+function renderSaveMsg(){
+  var el = document.getElementById("qfh-savemsg");
+  if (el) el.textContent = state.saveMsg;
+}
+
+// ---------- render: views ----------
+function renderLanding(){
+  return ''+
+    '<div class="brand"><div class="brand-name">NURA HEALTH</div>'+
+    '<div class="brand-tag">Nutrición · Entrenamiento</div></div>'+
+    '<div class="card">'+
+    '<p class="eyebrow">Cuestionario de consulta</p>'+
+    '<h2 class="step-title">Generar cuestionario para un paciente</h2>'+
+    '<p class="step-note">Cada paciente recibe su propio enlace (basado en este mismo archivo). Sus respuestas se guardan automáticamente conforme avanza — no hace falta ningún archivo adicional.</p>'+
+    '<div class="landing-actions">'+
+    '<button class="btn btn-primary" onclick="QFH.startNewPatientLink()">Generar enlace para nuevo paciente</button>'+
+    '</div>'+
+    '<div class="footer-link"><a onclick="QFH.goToDashboard()">Acceso equipo clínico — ver respuestas guardadas</a></div>'+
+    '</div>';
+}
+
+function renderFormShareBanner(){
+  var url = window.location.href;
+  return '<div class="card" style="margin-bottom:16px;">'+
+    '<p class="eyebrow">Enlace de este paciente</p>'+
+    '<div class="link-box">'+esc(url)+'</div>'+
+    '<p class="step-note" style="margin-top:10px;">Envía este enlace al paciente. Si cierra la pestaña, al volver a abrirlo continuará donde se quedó.</p>'+
+    '<button class="btn btn-primary" onclick="QFH.dismissShareBanner()">Comenzar cuestionario</button>'+
+    '</div>';
+}
+
+function renderForm(){
+  var secs = getVisibleSections();
+  if (state.step >= secs.length) state.step = secs.length-1;
+  var section = secs[state.step];
+  var isLast = state.step === secs.length-1;
+  var isFirst = state.step === 0;
+
+  var fieldsHtml = section.fields.map(renderField).join("");
+
+  var out = "";
+  out += '<div class="brand"><div class="brand-name">NURA HEALTH</div>'+
+    '<div class="brand-tag">Nutrición · Entrenamiento</div></div>';
+  out += renderOrbit();
+  out += '<div class="card">';
+  out += '<p class="eyebrow">'+esc(section.eyebrow)+'</p>';
+  out += '<h2 class="step-title">'+esc(section.title)+'</h2>';
+  if (section.note) out += '<p class="step-note">'+esc(section.note)+'</p>';
+  out += fieldsHtml;
+  out += '<div class="nav-row">';
+  out += isFirst ? '<span></span>' : '<button class="btn btn-ghost" onclick="QFH.prevStep()">← Atrás</button>';
+  out += isLast
+    ? '<button class="btn btn-primary" onclick="QFH.submitForm()">Enviar cuestionario</button>'
+    : '<button class="btn btn-primary" onclick="QFH.nextStep()">Siguiente →</button>';
+  out += '</div>';
+  out += '<div class="autosave" id="qfh-savemsg">'+esc(state.saveMsg)+'</div>';
+  out += '</div>';
+  return out;
+}
+
+function renderDone(){
+  return '<div class="brand"><div class="brand-name">NURA HEALTH</div></div>'+
+    '<div class="card">'+
+    '<p class="eyebrow">Listo</p>'+
+    '<h2 class="step-title">Gracias, '+esc((state.answers.nombre_completo||"").split(" ")[0]||"")+'</h2>'+
+    '<p class="step-note">Tu cuestionario fue enviado correctamente y quedó guardado para tu consulta.</p>'+
+    '</div>';
+}
+
+function renderDashboard(){
+  var out = '<div class="brand"><div class="brand-name">NURA HEALTH</div>'+
+    '<div class="brand-tag">Panel clínico</div></div>';
+  out += '<div class="card">';
+  out += '<p class="eyebrow">Equipo clínico</p>';
+  out += '<h2 class="step-title">Cuestionarios recibidos</h2>';
+  if (!state.dashList.length){
+    out += '<p class="step-note">Cargando o aún no hay cuestionarios guardados…</p>';
+  } else {
+    state.dashList.forEach(function(sub){
+      var a = sub.answers||{};
+      var name = a.nombre_completo || "(sin nombre)";
+      var date = sub.updatedAt ? new Date(sub.updatedAt).toLocaleString() : "";
+      out += '<div class="dash-row" onclick="QFH.openDashDetail(\''+sub.id+'\')">'+
+        '<div><div class="dash-name">'+esc(name)+'</div><div class="dash-meta">'+esc(date)+'</div></div>'+
+        '<span class="badge '+(sub.status==="completo"?"completo":"borrador")+'">'+esc(sub.status||"borrador")+'</span>'+
+        '</div>';
+    });
+  }
+  out += '<div class="footer-link" style="margin-top:18px;"><a onclick="QFH.backToLanding()">← Volver</a></div>';
+  out += '</div>';
+  return out;
+}
+
+function renderDashDetail(){
+  var sub = state.dashDetail;
+  var a = sub.answers||{};
+  var out = '<div class="brand"><div class="brand-name">NURA HEALTH</div></div>';
+  out += '<div class="card">';
+  out += '<p class="eyebrow">Detalle del cuestionario</p>';
+  out += '<h2 class="step-title">'+esc(a.nombre_completo||"(sin nombre)")+'</h2>';
+  SECTIONS.forEach(function(s){
+    if (s.visibleIf && !s.visibleIf(a)) return;
+    var items = s.fields.map(function(f){
+      if (f.showIf && !f.showIf(a)) return "";
+      var v = a[f.id];
+      if (v===undefined || v===null || v==="" || (Array.isArray(v)&&!v.length)) return "";
+      var display;
+      if (f.type==="table"){
+        display = (v||[]).map(function(r){
+          return f.columns.map(function(c){return r[c.constructor===Array?c[0]:c[0]];}).join(" · ");
+        }).join("; ");
+      } else if (Array.isArray(v)){
+        display = v.join(", ");
+      } else if (f.type==="confirm"){
+        display = v ? "Sí" : "No";
+      } else {
+        display = v;
+      }
+      return '<div class="summary-item"><span class="k">'+esc(f.label)+': </span><span class="v">'+esc(display)+'</span></div>';
+    }).join("");
+    if (!items) return;
+    out += '<div class="summary-block"><h4>'+esc(s.title)+'</h4>'+items+'</div>';
+  });
+  out += '<div class="footer-link" style="margin-top:10px;"><a onclick="QFH.goToDashboard()">← Volver al panel</a></div>';
+  out += '</div>';
+  return out;
+}
+
+function render(){
+  var app = document.getElementById("qfh-app");
+  if (state.view==="loading") app.innerHTML = "Cargando…";
+  else if (state.view==="landing") app.innerHTML = renderLanding();
+  else if (state.view==="form-share") app.innerHTML = renderFormShareBanner();
+  else if (state.view==="form") app.innerHTML = renderForm();
+  else if (state.view==="done") app.innerHTML = renderDone();
+  else if (state.view==="dashboard") app.innerHTML = renderDashboard();
+  else if (state.view==="dash-detail") app.innerHTML = renderDashDetail();
+}
+
+// ---------- interactions ----------
+var QFH = {
+  startNewPatientLink: startNewPatientLink,
+  dismissShareBanner: function(){ state.view="form"; render(); },
+  goToDashboard: goToDashboard,
+  backToLanding: function(){ window.location.hash=""; state.view="landing"; render(); },
+  openDashDetail: function(id){
+    var sub = state.dashList.filter(function(s){return s.id===id;})[0];
+    state.dashDetail = sub;
+    state.view = "dash-detail";
+    render();
+  },
+  onTextInput: function(id, value){
+    var f = fieldById(id);
+    state.answers[id] = (f && f.type==="number" && value==="") ? "" : value;
+    doAutosave();
+  },
+  onChoice: function(id, value, multi){
+    if (multi){
+      var arr = (state.answers[id]||[]).slice();
+      var idx = arr.indexOf(value);
+      if (idx>-1) arr.splice(idx,1); else arr.push(value);
+      state.answers[id] = arr;
+    } else {
+      state.answers[id] = (typeof value==="string") ? value : Number(value);
+    }
+    doAutosave();
+    render();
+  },
+  onConfirm: function(id, checked){
+    state.answers[id] = checked;
+    doAutosave();
+  },
+  onTableAdd: function(id){
+    var arr = (state.answers[id]||[]).slice();
+    arr.push({});
+    state.answers[id]=arr;
+    render();
+  },
+  onTableRemove: function(id, idx){
+    var arr = (state.answers[id]||[]).slice();
+    arr.splice(idx,1);
+    state.answers[id]=arr;
+    doAutosave();
+    render();
+  },
+  onTableInput: function(id, idx, col, value){
+    var arr = (state.answers[id]||[]).slice();
+    if (!arr[idx]) arr[idx]={};
+    arr[idx][col]=value;
+    state.answers[id]=arr;
+    doAutosave();
+  },
+  nextStep: function(){
+    var secs = getVisibleSections();
+    var errs = sectionErrors(secs[state.step]);
+    if (errs.length){
+      alert("Por favor completa los campos obligatorios antes de continuar.");
+      return;
+    }
+    if (state.step < secs.length-1){ state.step++; window.scrollTo(0,0); render(); }
+  },
+  prevStep: function(){
+    if (state.step>0){ state.step--; window.scrollTo(0,0); render(); }
+  },
+  submitForm: function(){
+    // Guarda antiduplicado: un doble clic en "Enviar" creaba dos envíos reales
+    // (y dos expedientes distintos del mismo paciente). El servidor tiene su
+    // propia guarda, pero esta evita el viaje de ida.
+    if (state.enviando) return;
+    var secs = getVisibleSections();
+    var errs = sectionErrors(secs[state.step]);
+    if (errs.length){
+      alert("Por favor completa los campos obligatorios antes de enviar.");
+      return;
+    }
+    state.enviando = true;
+    var btns = document.querySelectorAll('.btn-primary');
+    for (var i=0;i<btns.length;i++){ btns[i].disabled = true; btns[i].textContent = "Enviando..."; }
+    finalizeSubmission().then(function(){
+      state.enviando = false;
+      state.view = "done";
+      render();
+    }).catch(function(err){
+      state.enviando = false;
+      render();
+      // Si el candado de NURA Health detuvo el envío, se dice ESO: culpar a la
+      // conexión mandaría a reintentar algo que nunca va a salir.
+      alert(err && err.nhBloqueo ? err.message : "No se pudo enviar. Revisa tu conexión e intenta de nuevo.");
+    });
+  }
+};
+window.QFH = QFH;
+
+// default today's date for fecha_consulta once id exists
+function applyDefaults(){
+  var todayField = fieldById("fecha_consulta");
+  if (todayField && !state.answers.fecha_consulta){
+    state.answers.fecha_consulta = new Date().toISOString().slice(0,10);
+  }
+}
+
+init();
+
+})();
+</script>

@@ -1,0 +1,491 @@
+<!-- NURA Health - Cuestionarios | Copyright (C) 2026 NURA Cells | SPDX-License-Identifier: AGPL-3.0-or-later -->
+<style>
+  #sqo-root{
+    --qr:#404040; --qrl:rgba(64,64,64,0.055);
+    --bg:#F3F1EF; --surface-2:#FFFFFF;
+    --border:#E7E4E2; --border-strong:#C7C2BE;
+    --text-primary:#1C1917; --text-secondary:#57534E; --text-muted:#8A8580;
+    --radius:10px;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Inter,sans-serif;
+    background:var(--bg); padding:28px 14px; min-height:100vh; box-sizing:border-box;
+  }
+  #sqo-root *{box-sizing:border-box;}
+  #sqo-root .shell{max-width:480px;margin:0 auto;background:var(--surface-2);border:.5px solid var(--border);border-radius:12px;overflow:hidden;}
+  #sqo-root .pad{padding:1.5rem;}
+  #sqo-root .header{padding:1.25rem 1.25rem .75rem;border-bottom:.5px solid var(--border);}
+  #sqo-root .eyebrow{font-size:11px;font-weight:600;color:var(--qr);letter-spacing:.08em;text-transform:uppercase;margin:0 0 6px;}
+  #sqo-root .title{font-size:19px;font-weight:600;color:var(--text-primary);margin:0;}
+  #sqo-root .subtitle{font-size:13px;color:var(--text-secondary);margin:4px 0 0;line-height:1.5;}
+  #sqo-root .body{padding:1.1rem 1.25rem .25rem;}
+  #sqo-root .field{margin-bottom:1.1rem;}
+  #sqo-root .q-label{display:block;font-size:13px;font-weight:500;color:var(--text-primary);margin-bottom:6px;}
+  #sqo-root .q-hint{display:block;font-size:12px;color:var(--text-muted);margin:-2px 0 8px;}
+  #sqo-root .note-text{font-size:13px;font-weight:500;color:var(--text-primary);margin:0 0 .9rem;}
+  #sqo-root .divider{height:.5px;background:var(--border);margin:1.1rem 0;}
+
+  #sqo-root input[type=text], #sqo-root input[type=number], #sqo-root textarea{
+    width:100%;font-family:inherit;font-size:14px;color:var(--text-primary);
+    background:var(--surface-2);border:1px solid var(--border);border-radius:var(--radius);
+    padding:10px 12px;outline:none;
+  }
+  #sqo-root input:focus, #sqo-root textarea:focus{border-color:var(--qr);}
+  #sqo-root textarea{resize:vertical;font-family:inherit;}
+
+  #sqo-root .opt-pill-row{display:flex;flex-wrap:wrap;flex-direction:row;gap:7px;}
+  #sqo-root .opt-pill{flex:1;min-width:0;padding:7px 13px;border-radius:20px;border:1.5px solid var(--border);
+    background:var(--surface-2);color:var(--text-primary);font-size:13px;font-weight:400;cursor:pointer;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:left;line-height:1.35;font-family:inherit;}
+  #sqo-root .opt-pill.selected{border-color:var(--qr);background:var(--qrl);color:var(--qr);font-weight:500;}
+
+  #sqo-root .opt-row-row{display:flex;flex-wrap:wrap;gap:7px;}
+  #sqo-root .opt-row-btn{flex:1;padding:10px 13px;border-radius:var(--radius);border:1.5px solid var(--border);
+    background:var(--surface-2);color:var(--text-primary);font-size:14px;font-weight:400;cursor:pointer;
+    text-align:center;line-height:1.35;font-family:inherit;}
+  #sqo-root .opt-row-btn.selected{border-color:var(--qr);background:var(--qrl);color:var(--qr);font-weight:500;}
+
+  #sqo-root .opt-list-col{display:flex;flex-direction:column;gap:7px;}
+  #sqo-root .opt-list-btn{display:flex;align-items:center;gap:9px;width:100%;padding:10px 13px;
+    border-radius:var(--radius);border:1.5px solid var(--border);background:var(--surface-2);
+    color:var(--text-primary);font-size:14px;font-weight:400;cursor:pointer;text-align:left;
+    line-height:1.35;font-family:inherit;}
+  #sqo-root .opt-list-btn.selected{border-color:var(--qr);background:var(--qrl);color:var(--qr);font-weight:500;}
+  #sqo-root .opt-circle{width:15px;height:15px;border-radius:50%;border:1.5px solid var(--border-strong);
+    flex-shrink:0;display:flex;align-items:center;justify-content:center;}
+  #sqo-root .opt-list-btn.selected .opt-circle{border:2px solid var(--qr);background:var(--qr);}
+  #sqo-root .opt-circle-dot{width:5px;height:5px;border-radius:50%;background:#fff;display:none;}
+  #sqo-root .opt-list-btn.selected .opt-circle-dot{display:block;}
+
+  #sqo-root .scale-row{display:flex;gap:3px;margin-bottom:4px;}
+  #sqo-root .scale-btn{flex:1;height:36px;border:1px solid var(--border);border-radius:6px;font-size:12px;
+    cursor:pointer;background:var(--surface-2);color:var(--text-secondary);font-weight:400;font-family:inherit;}
+  #sqo-root .scale-btn.selected{border:none;background:var(--qr);color:#fff;font-weight:600;}
+  #sqo-root .scale-caption{display:flex;justify-content:space-between;font-size:11px;color:var(--text-muted);}
+
+  #sqo-root .slider-row{display:flex;align-items:center;gap:10px;}
+  #sqo-root .slider-value{font-size:22px;font-weight:500;color:var(--qr);min-width:52px;flex-shrink:0;}
+  #sqo-root .slider-unit{font-size:12px;color:var(--text-muted);flex-shrink:0;}
+  #sqo-root input[type=range]{flex:1;accent-color:var(--qr);}
+
+  #sqo-root .btn-primary{height:42px;background:var(--qr);border:none;border-radius:var(--radius);color:#fff;
+    font-size:15px;font-weight:500;cursor:pointer;font-family:inherit;width:100%;transition:opacity .15s;}
+  #sqo-root .btn-primary:disabled{opacity:.65;cursor:not-allowed;}
+  #sqo-root .btn-secondary{height:42px;background:var(--text-primary);border:none;border-radius:var(--radius);
+    color:#fff;font-size:15px;font-weight:500;cursor:pointer;font-family:inherit;width:100%;}
+  #sqo-root .link-box{background:var(--qrl);border:1px solid var(--qr);border-radius:10px;padding:12px 14px;
+    font-size:12.5px;word-break:break-all;color:var(--qr);font-family:monospace;}
+  #sqo-root .footer-link{text-align:center;margin-top:18px;font-size:12px;color:var(--text-muted);}
+  #sqo-root .footer-link a{cursor:pointer;text-decoration:underline;color:inherit;}
+  #sqo-root .err-msg{padding:0 1.25rem .75rem;font-size:12px;color:var(--qr);line-height:1.5;}
+  #sqo-root .save-msg{text-align:center;padding:0 0 14px;font-size:11px;font-family:monospace;color:var(--text-muted);min-height:14px;}
+  #sqo-root .done-wrap{padding:2.5rem 1.5rem;text-align:center;}
+  #sqo-root .done-icon{width:56px;height:56px;background:var(--qrl);border-radius:50%;margin:0 auto 1rem;
+    display:flex;align-items:center;justify-content:center;}
+  #sqo-root .done-title{font-size:20px;font-weight:600;margin:0 0 8px;color:var(--text-primary);}
+  #sqo-root .done-text{font-size:14px;color:var(--text-secondary);line-height:1.6;margin:0;}
+
+  #sqo-root .dash-row{display:flex;justify-content:space-between;align-items:center;padding:11px 2px;
+    border-bottom:.5px solid var(--border);cursor:pointer;}
+  #sqo-root .dash-row:hover{background:var(--qrl);}
+  #sqo-root .dash-name{font-weight:600;font-size:14px;color:var(--text-primary);}
+  #sqo-root .dash-meta{font-size:11px;color:var(--text-muted);font-family:monospace;}
+  #sqo-root .badge{font-size:10px;text-transform:uppercase;padding:3px 8px;border-radius:999px;}
+  #sqo-root .badge.completo{background:var(--qrl);color:var(--qr);}
+  #sqo-root .badge.borrador{background:#F3EBD9;color:#946C1F;}
+  #sqo-root .summary-item{font-size:13.5px;margin-bottom:6px;}
+  #sqo-root .summary-item .k{color:var(--text-secondary);}
+  #sqo-root .summary-item .v{font-weight:500;color:var(--text-primary);}
+  #sqo-root .confirm-box{background:var(--qrl);border:1px solid var(--qr);border-radius:10px;padding:14px 16px;display:flex;gap:10px;align-items:flex-start;}
+  #sqo-root .confirm-box input{width:auto;margin-top:3px;flex-shrink:0;}
+  #sqo-root .confirm-box label{font-size:13px;color:var(--text-primary);line-height:1.5;}
+
+  @media (prefers-reduced-motion: reduce){ #sqo-root *{transition:none !important;} }
+</style>
+
+<div id="sqo-root"><div id="sqo-app">Cargando…</div></div>
+
+<script>
+(function(){
+
+// Polyfill de almacenamiento: window.storage no existe en un navegador real
+// (solo existía en el entorno de vista previa donde se armó este formulario).
+// Esta versión usa localStorage, que sí está disponible en cualquier
+// navegador real (Chrome, Safari, Edge, etc.), con la misma forma de uso
+// (set/get/list que devuelven promesas) para no tener que tocar el resto
+// del código de autoguardado.
+if (!window.storage) {
+  window.storage = {
+    set: function (key, value) {
+      try { localStorage.setItem(key, value); return Promise.resolve(); }
+      catch (e) { return Promise.reject(e); }
+    },
+    get: function (key) {
+      try { return Promise.resolve({ value: localStorage.getItem(key) }); }
+      catch (e) { return Promise.reject(e); }
+    },
+    list: function (prefix) {
+      try {
+        var keys = [];
+        for (var i = 0; i < localStorage.length; i++) {
+          var k = localStorage.key(i);
+          if (k && k.indexOf(prefix) === 0) keys.push(k);
+        }
+        return Promise.resolve({ keys: keys });
+      } catch (e) { return Promise.reject(e); }
+    }
+  };
+}
+
+var CLINIC_PASSCODE = 'PEGAR_CODIGO_EQUIPO_NURA_HEALTH';
+// ⚠️ Este código vive en el HTML y cualquiera lo lee con «Ver código fuente».
+// Solo evita que un paciente entre por error al panel de borradores de ESTE
+// navegador; NO es un control de seguridad. Mientras diga PEGAR_…, el panel no abre.
+var STORAGE_PREFIX = "seg_online:";
+var ADHERENCIA = ["Excelente", "Buena, con ajustes", "Irregular", "Baja"];
+
+// Pipeline de NURA Health (Apps Script) — pegar aquí la URL que da Apps Script
+// al publicar el Web App (05_DOCS/DESPLIEGUE.md). Termina en /exec
+var NH_ENDPOINT = 'PEGAR_URL_EXEC_NURA_HEALTH';
+
+// ===== Candados de NURA Health (ver 05_DOCS/CANDADOS.md) =====================
+// El cuestionario NO envía mientras falte la URL del sistema o quede cualquier
+// texto legal [PENDIENTE]. Sin URL el envío se pierde en silencio (mode:no-cors
+// nunca lee la respuesta); sin texto legal se recogerían datos de salud bajo un
+// aviso que no existe. Las dos fallas caen del lado seguro: no se envía nada.
+function nhMotivoDeBloqueo_(){
+  if (/^PEGAR_/.test(NH_ENDPOINT)) return "este cuestionario todavía no está conectado al sistema de NURA Health.";
+  if (/\[PENDIENTE/.test(JSON.stringify(FIELDS))) return "falta el texto legal de NURA Health (Aviso de Privacidad y consentimiento). No escribas datos todavía: no se van a poder enviar.";
+  return null;
+}
+document.addEventListener('DOMContentLoaded', function(){
+  var m = nhMotivoDeBloqueo_(); if (!m) return;
+  var d = document.createElement('div');
+  d.setAttribute('role', 'alert');
+  d.style.cssText = 'position:sticky;top:0;z-index:9999;background:#fff4e5;color:#5c3d00;border-bottom:2px solid #b26a00;padding:12px 16px;font:600 14px/1.4 system-ui,sans-serif;text-align:center';
+  d.textContent = 'CUESTIONARIO NO OPERATIVO — ' + m;
+  document.body.insertBefore(d, document.body.firstChild);
+});
+var TIPO_DE_FORMULARIO = 'seguimiento';
+
+var FIELDS = [
+  {id:"nombre", type:"text", label:"¿Cuál es tu nombre?", placeholder:"Nombre completo"},
+  // El teléfono es la ÚNICA clave con la que el sistema reconoce tu expediente
+  // y encuentra tu plan anterior. Sin él se crea un expediente nuevo cada vez.
+  {id:"telefono", type:"text", label:"¿Cuál es tu teléfono / WhatsApp?", placeholder:"10 dígitos, el mismo que diste la primera vez", required:true},
+  {id:"peso", type:"slider", label:"¿Cuánto pesas actualmente?", min:30, max:250, unit:"kg", def:75},
+  {id:"cinturaMin", type:"number", label:"Cintura (opcional, si la mides)", placeholder:"cm"},
+  {type:"divider"},
+  {type:"note", text:"¿Qué tanto seguiste el plan desde tu última consulta?"},
+  {id:"adherenciaAlim", type:"pill", label:"Alimentación", options:ADHERENCIA},
+  {id:"adherenciaEntreno", type:"pill", label:"Entrenamiento", options:ADHERENCIA},
+  {id:"adherenciaSupl", type:"pill", label:"Suplementación", options:ADHERENCIA},
+  {type:"divider"},
+  {id:"huboCambios", type:"row", label:"¿Hubo algún cambio en tu salud, medicamentos o lesiones desde la última consulta?", options:["Sí","No"]},
+  {id:"cambiosDetalle", type:"textarea", label:"Cuéntanos qué cambió", placeholder:"Nuevo medicamento, lesión, diagnóstico, etc.",
+    showIf:function(a){return a.huboCambios==="Sí";}},
+  {id:"enFarmacologia", type:"row", label:"¿Sigues actualmente algún protocolo farmacológico indicado por tu médico de NURA Health?", options:["Sí","No"]},
+  {id:"farmacoTolerancia", type:"textarea", label:"¿Cómo te ha sentado? ¿Algún efecto o síntoma que quieras reportar?", placeholder:"Tolerancia, efectos secundarios, dudas...",
+    showIf:function(a){return a.enFarmacologia==="Sí";}},
+  {type:"divider"},
+  {id:"calidadSueno", type:"scale", label:"Calidad de tu sueño últimamente", lo:"Muy malo", hi:"Excelente", def:6},
+  {id:"nivelEstres", type:"scale", label:"Nivel de estrés últimamente", lo:"Sin estrés", hi:"Estrés máximo", def:5},
+  {id:"satisfaccion", type:"scale", label:"¿Qué tan satisfecho estás con tu plan actual?", lo:"Nada satisfecho", hi:"Totalmente", def:8},
+  {type:"divider"},
+  {id:"ajustes", type:"textarea", label:"¿Qué te gustaría ajustar en tu próxima versión del plan?", placeholder:"Algo que no te acomodó, algo que quieras agregar...", rows:3},
+  {id:"tieneEstudios", type:"list", label:"¿Tienes estudios de laboratorio nuevos desde la última vez?", options:["Sí, los tengo","Los estoy programando","No aplica"]},
+  {type:"divider"},
+  {type:"note", text:"[PENDIENTE: resumen del Aviso de Privacidad de NURA Health. Lo redacta y valida el abogado de NURA. Debe declarar el tratamiento de datos de salud para elaborar el plan, el uso de un proveedor de inteligencia artificial como encargado que procesa esos datos, y el consentimiento expreso por separado. Mientras este texto no exista, este cuestionario no envía.]"},
+  {id:"aviso_privacidad_aceptado", type:"confirm", required:true, label:"[PENDIENTE: texto de aceptación del Aviso de Privacidad de NURA Health — lo valida el abogado de NURA]"},
+      {id:"consentimiento_ia", type:"confirm", required:true, label:"[PENDIENTE: texto de consentimiento EXPRESO para que los datos de salud se procesen con apoyo de un sistema de inteligencia artificial — lo valida el abogado de NURA]"}
+];
+
+function esc(str){
+  return String(str==null?"":str).replace(/[&<>"]/g, function(c){
+    return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];
+  });
+}
+function uid(){ return Date.now().toString(36)+Math.random().toString(36).slice(2,8); }
+function debounce(fn, ms){ var t; return function(){ var a=arguments; clearTimeout(t); t=setTimeout(function(){fn.apply(null,a);},ms); }; }
+
+var state = { view:"loading", id:null, answers:{}, saveMsg:"", dashList:[], dashDetail:null, submitting:false, submitError:false };
+
+function applyDefaults(){
+  FIELDS.forEach(function(f){
+    if (f.id && f.def!==undefined && state.answers[f.id]===undefined) state.answers[f.id]=f.def;
+  });
+}
+
+function parseHash(){
+  var h = window.location.hash || "";
+  var m = h.match(/id=([a-z0-9]+)/i);
+  return m ? m[1] : null;
+}
+
+var doAutosave = debounce(function(){ saveDraft(); }, 700);
+
+function saveDraft(){
+  if(!state.id) return;
+  var payload = { id: state.id, answers: state.answers, status:"borrador", updatedAt:new Date().toISOString() };
+  window.storage.set(STORAGE_PREFIX+state.id, JSON.stringify(payload), true).then(function(){
+    state.saveMsg="Guardado ✓"; paintSaveMsg();
+    setTimeout(function(){ state.saveMsg=""; paintSaveMsg(); }, 1500);
+  }).catch(function(){ state.saveMsg="No se pudo guardar. Revisa tu conexión."; paintSaveMsg(); });
+}
+
+function finalizeSubmission(){
+  var nhBloqueo = nhMotivoDeBloqueo_();
+  if (nhBloqueo) { var nhErr = new Error(nhBloqueo); nhErr.nhBloqueo = true; return Promise.reject(nhErr); }
+  // Enviar los datos al pipeline de NURA Health (Apps Script) en vez de a Formspree.
+  // mode:'no-cors' es intencional (Regla 16: el paciente nunca ve el plan
+  // generado, así que no necesitamos leer la respuesta del servidor).
+  var payload = Object.assign({}, state.answers, { formType: TIPO_DE_FORMULARIO });
+  return fetch(NH_ENDPOINT, {
+    method: "POST",
+    mode: "no-cors",
+    headers: { "Content-Type": "text/plain;charset=utf-8" },
+    body: JSON.stringify(payload)
+  });
+}
+
+function loadDraft(id){
+  return window.storage.get(STORAGE_PREFIX+id, true).then(function(res){
+    if(res && res.value){ state.answers = JSON.parse(res.value).answers || {}; }
+  }).catch(function(){});
+}
+
+function init(){
+  var existingId = parseHash();
+  if (existingId){
+    state.id = existingId;
+    loadDraft(existingId).then(function(){
+      applyDefaults();
+      state.view="form";
+      render();
+    });
+  } else {
+    state.view="landing";
+    render();
+  }
+}
+
+function startNewPatientLink(){
+  state.id = uid();
+  window.location.hash = "id="+state.id;
+  state.answers = {};
+  applyDefaults();
+  state.view = "share";
+  render();
+}
+
+function goToDashboard(){
+  if (/^PEGAR_/.test(CLINIC_PASSCODE)) { alert("El acceso del equipo no está configurado en este cuestionario."); return; }
+  var pass = window.prompt("Acceso equipo clínico — código:");
+  if (pass !== CLINIC_PASSCODE){ if(pass!==null) alert("Código incorrecto."); return; }
+  state.view="dashboard"; state.dashList=[]; render();
+  window.storage.list(STORAGE_PREFIX, true).then(function(res){
+    var keys=(res&&res.keys)||[];
+    Promise.all(keys.map(function(k){
+      return window.storage.get(k, true).then(function(r){ try{return JSON.parse(r.value);}catch(e){return null;} }).catch(function(){return null;});
+    })).then(function(list){
+      state.dashList = list.filter(Boolean).sort(function(a,b){ return (b.updatedAt||"").localeCompare(a.updatedAt||""); });
+      render();
+    });
+  });
+}
+
+/* ---------- render helpers ---------- */
+function renderField(f){
+  if (f.type==="divider") return '<div class="divider"></div>';
+  if (f.type==="note") return '<p class="note-text">'+esc(f.text)+'</p>';
+  if (f.showIf && !f.showIf(state.answers)) return "";
+  var val = state.answers[f.id];
+  var hint = f.hint ? '<span class="q-hint">'+esc(f.hint)+'</span>' : "";
+
+  if (f.type==="text"){
+    return '<div class="field"><label class="q-label">'+esc(f.label)+'</label>'+hint+
+      '<input type="text" value="'+esc(val||"")+'" placeholder="'+esc(f.placeholder||"")+'" oninput="SQ.onText(\''+f.id+'\',this.value)"></div>';
+  }
+  if (f.type==="number"){
+    return '<div class="field"><label class="q-label">'+esc(f.label)+'</label>'+hint+
+      '<input type="number" value="'+esc(val||"")+'" placeholder="'+esc(f.placeholder||"")+'" oninput="SQ.onText(\''+f.id+'\',this.value)"></div>';
+  }
+  if (f.type==="textarea"){
+    return '<div class="field"><label class="q-label">'+esc(f.label)+'</label>'+hint+
+      '<textarea rows="'+(f.rows||2)+'" placeholder="'+esc(f.placeholder||"")+'" oninput="SQ.onText(\''+f.id+'\',this.value)">'+esc(val||"")+'</textarea></div>';
+  }
+  if (f.type==="slider"){
+    var v = (val===undefined?f.def:val);
+    return '<div class="field"><label class="q-label">'+esc(f.label)+'</label>'+
+      '<div class="slider-row"><span class="slider-value" id="sqo-val-'+f.id+'">'+esc(v)+'</span>'+
+      (f.unit?'<span class="slider-unit">'+esc(f.unit)+'</span>':'')+
+      '<input type="range" min="'+f.min+'" max="'+f.max+'" value="'+esc(v)+'" oninput="SQ.onSlider(\''+f.id+'\',this.value)"></div></div>';
+  }
+  if (f.type==="pill"){
+    var chips = f.options.map(function(o){
+      var sel = val===o ? " selected":"";
+      return '<button type="button" class="opt-pill'+sel+'" onclick="SQ.onChoice(\''+f.id+'\',\''+esc(o).replace(/'/g,"\\'")+'\')">'+esc(o)+'</button>';
+    }).join("");
+    return '<div class="field"><label class="q-label">'+esc(f.label)+'</label><div class="opt-pill-row">'+chips+'</div></div>';
+  }
+  if (f.type==="row"){
+    var rowbtns = f.options.map(function(o){
+      var sel = val===o ? " selected":"";
+      return '<button type="button" class="opt-row-btn'+sel+'" onclick="SQ.onChoice(\''+f.id+'\',\''+esc(o).replace(/'/g,"\\'")+'\')">'+esc(o)+'</button>';
+    }).join("");
+    return '<div class="field"><label class="q-label">'+esc(f.label)+'</label><div class="opt-row-row">'+rowbtns+'</div></div>';
+  }
+  if (f.type==="list"){
+    var listbtns = f.options.map(function(o){
+      var sel = val===o ? " selected":"";
+      return '<button type="button" class="opt-list-btn'+sel+'" onclick="SQ.onChoice(\''+f.id+'\',\''+esc(o).replace(/'/g,"\\'")+'\')">'+
+        '<span class="opt-circle"><span class="opt-circle-dot"></span></span>'+esc(o)+'</button>';
+    }).join("");
+    return '<div class="field"><label class="q-label">'+esc(f.label)+'</label><div class="opt-list-col">'+listbtns+'</div></div>';
+  }
+  if (f.type==="scale"){
+    var n = (val===undefined?f.def:val);
+    var sbtns = "";
+    for (var i=1;i<=10;i++){ sbtns += '<button type="button" class="scale-btn'+(n==i?" selected":"")+'" onclick="SQ.onChoice(\''+f.id+'\','+i+')">'+i+'</button>'; }
+    return '<div class="field"><label class="q-label">'+esc(f.label)+'</label>'+
+      '<div class="scale-row">'+sbtns+'</div><div class="scale-caption"><span>'+esc(f.lo)+'</span><span>'+esc(f.hi)+'</span></div></div>';
+  }
+  if (f.type==="confirm"){
+    var checked = val ? "checked" : "";
+    return '<div class="field confirm-box"><input type="checkbox" '+checked+' onchange="SQ.onConfirm(\''+f.id+'\',this.checked)">'+
+      '<label>'+esc(f.label)+'</label></div>';
+  }
+  return "";
+}
+
+function paintSaveMsg(){ var el=document.getElementById("sqo-savemsg"); if(el) el.textContent=state.saveMsg; }
+
+function renderLanding(){
+  return '<div class="shell"><div class="pad">'+
+    '<p class="eyebrow">NURA HEALTH</p>'+
+    '<h2 class="title">Generar seguimiento en línea</h2>'+
+    '<p class="subtitle" style="margin-bottom:18px;">Genera el enlace de este paciente. Sus respuestas se guardan automáticamente ahí mismo — nada de archivos sueltos.</p>'+
+    '<button type="button" class="btn-primary" onclick="SQ.startNewPatientLink()">Generar enlace para nuevo paciente</button>'+
+    '<div class="footer-link"><a onclick="SQ.goToDashboard()">Acceso equipo clínico — ver respuestas guardadas</a></div>'+
+    '</div></div>';
+}
+
+function renderShare(){
+  return '<div class="shell"><div class="pad">'+
+    '<p class="eyebrow">Enlace de este paciente</p>'+
+    '<div class="link-box">'+esc(window.location.href)+'</div>'+
+    '<p class="subtitle" style="margin:12px 0 18px;">Envía este enlace a tu paciente. Si cierra la pestaña, al reabrirlo continuará donde se quedó.</p>'+
+    '<button type="button" class="btn-primary" onclick="SQ.dismissShare()">Comenzar cuestionario</button>'+
+    '</div></div>';
+}
+
+function renderForm(){
+  var body = FIELDS.map(renderField).join("");
+  var out = '<div class="shell">';
+  out += '<div class="header"><p class="eyebrow">NURA HEALTH</p>'+
+    '<h2 class="title">Seguimiento rápido</h2>'+
+    '<p class="subtitle">Antes de tu siguiente versión del plan, cuéntanos cómo te ha ido. Toma 2-3 minutos.</p></div>';
+  out += '<div class="body">'+body+'</div>';
+  if (state.submitError) out += '<div class="err-msg">'+(typeof state.submitError==="string" ? esc(state.submitError) : 'No pudimos enviar tu seguimiento. Revisa tu conexión e intenta de nuevo.')+'</div>';
+  out += '<div class="pad" style="padding-top:0;"><button type="button" class="btn-primary" '+(state.submitting?"disabled":"")+' onclick="SQ.submitForm()">'+(state.submitting?"Enviando...":"Enviar seguimiento →")+'</button></div>';
+  out += '<div class="save-msg" id="sqo-savemsg">'+esc(state.saveMsg)+'</div>';
+  out += '</div>';
+  return out;
+}
+
+function renderDone(){
+  var first = (state.answers.nombre||"").split(" ")[0]||"";
+  return '<div class="shell"><div class="done-wrap">'+
+    '<div class="done-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none"><path d="M5 13l4 4L19 7" stroke="#404040" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg></div>'+
+    '<h2 class="done-title">¡Gracias'+(first?", "+esc(first):"")+'!</h2>'+
+    '<p class="done-text">Tu médico revisará tu seguimiento y ajustará tu plan para la siguiente versión.</p>'+
+    '</div></div>';
+}
+
+function renderDashboard(){
+  var out = '<div class="shell"><div class="pad">';
+  out += '<p class="eyebrow">Equipo clínico</p><h2 class="title">Seguimientos en línea recibidos</h2>';
+  if (!state.dashList.length){ out += '<p class="subtitle" style="margin-top:10px;">Cargando o aún no hay respuestas guardadas…</p>'; }
+  else {
+    state.dashList.forEach(function(sub){
+      var a = sub.answers||{};
+      var date = sub.updatedAt ? new Date(sub.updatedAt).toLocaleString() : "";
+      out += '<div class="dash-row" onclick="SQ.openDashDetail(\''+sub.id+'\')">'+
+        '<div><div class="dash-name">'+esc(a.nombre||"(sin nombre)")+'</div><div class="dash-meta">'+esc(date)+'</div></div>'+
+        '<span class="badge '+(sub.status==="completo"?"completo":"borrador")+'">'+esc(sub.status||"borrador")+'</span></div>';
+    });
+  }
+  out += '<div class="footer-link" style="margin-top:16px;"><a onclick="SQ.backToLanding()">← Volver</a></div>';
+  out += '</div></div>';
+  return out;
+}
+
+function renderDashDetail(){
+  var sub = state.dashDetail, a = sub.answers||{};
+  var items = FIELDS.filter(function(f){return f.id;}).map(function(f){
+    var v = a[f.id];
+    if (v===undefined||v===null||v==="") return "";
+    var display = f.type==="scale" ? v+"/10" : (f.type==="slider" ? v+" "+(f.unit||"") : v);
+    return '<div class="summary-item"><span class="k">'+esc(f.label)+': </span><span class="v">'+esc(display)+'</span></div>';
+  }).join("");
+  return '<div class="shell"><div class="pad">'+
+    '<p class="eyebrow">Detalle del seguimiento</p><h2 class="title">'+esc(a.nombre||"(sin nombre)")+'</h2>'+
+    '<div style="margin-top:14px;">'+items+'</div>'+
+    '<div class="footer-link" style="margin-top:16px;"><a onclick="SQ.goToDashboard()">← Volver al panel</a></div>'+
+    '</div></div>';
+}
+
+function render(){
+  var app = document.getElementById("sqo-app");
+  if (state.view==="loading") app.innerHTML = '<div class="shell"><div class="pad" style="text-align:center;color:var(--text-muted);">Cargando…</div></div>';
+  else if (state.view==="landing") app.innerHTML = renderLanding();
+  else if (state.view==="share") app.innerHTML = renderShare();
+  else if (state.view==="form") app.innerHTML = renderForm();
+  else if (state.view==="done") app.innerHTML = renderDone();
+  else if (state.view==="dashboard") app.innerHTML = renderDashboard();
+  else if (state.view==="dash-detail") app.innerHTML = renderDashDetail();
+}
+
+window.SQ = {
+  startNewPatientLink: startNewPatientLink,
+  dismissShare: function(){ state.view="form"; render(); },
+  goToDashboard: goToDashboard,
+  backToLanding: function(){ window.location.hash=""; state.view="landing"; render(); },
+  openDashDetail: function(id){
+    state.dashDetail = state.dashList.filter(function(s){return s.id===id;})[0];
+    state.view="dash-detail"; render();
+  },
+  onText: function(id, value){ state.answers[id]=value; doAutosave(); },
+  onSlider: function(id, value){
+    state.answers[id]=Number(value);
+    var el=document.getElementById("sqo-val-"+id); if(el) el.textContent=value;
+    doAutosave();
+  },
+  onChoice: function(id, value){
+    state.answers[id] = (typeof value==="string") ? value : Number(value);
+    doAutosave();
+    render();
+  },
+  onConfirm: function(id, checked){
+    state.answers[id] = checked;
+    doAutosave();
+  },
+  submitForm: function(){
+    var faltanRequeridos = FIELDS.some(function(f){
+      return f.required && (f.showIf ? f.showIf(state.answers) : true) && !state.answers[f.id];
+    });
+    if (faltanRequeridos){
+      alert("Para poder enviar tu seguimiento necesitamos que aceptes el Aviso de Privacidad.");
+      return;
+    }
+    state.submitting = true; state.submitError=false; render();
+    finalizeSubmission().then(function(){
+      state.submitting=false; state.view="done"; render();
+    }).catch(function(err){
+      state.submitting=false; state.submitError=(err && err.nhBloqueo) ? err.message : true; render();
+    });
+  }
+};
+
+init();
+
+})();
+</script>

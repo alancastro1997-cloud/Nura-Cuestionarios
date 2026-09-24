@@ -1,0 +1,713 @@
+<!-- NURA Health - Cuestionarios | Copyright (C) 2026 NURA Cells | SPDX-License-Identifier: AGPL-3.0-or-later -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<!--
+  SEGUIMIENTO PRESENCIAL DIGITAL — NURA Health
+  Uso INTERNO: la llena el Dr. Castro durante una consulta de seguimiento EN
+  PERSONA (paciente ya conocido, plan ya existente). Es la versión presencial
+  de nurah_seguimiento_enlinea.html — más corta que la Historia Clínica
+  Digital inicial (historia_clinica_digital.html), porque acá no se repite
+  toda la ficha de identificación ni la exploración física completa, salvo
+  que la consulta lo amerite.
+
+  LA DIFERENCIA CLAVE con el seguimiento en línea: acá NO hace falta pegar
+  el plan anterior a mano (columna G del Sheet). Code.gs busca automáticamente
+  el Doc de plan más reciente en la carpeta del expediente del paciente
+  (emparejado por teléfono) y se lo manda a Claude como contexto. El campo de "plan anterior" de
+  este formulario es solo un respaldo manual opcional, por si el paciente es
+  nuevo en el expediente digital o quieres forzar contexto extra.
+-->
+
+<style>
+  :root{
+    --bg:#F3F1EF;
+    --surface:#FFFFFF;
+    --ink:#1C1917;
+    --ink-soft:#57534E;
+    --ink-faint:#8A8580;
+    --accent:#404040;
+    --accent-dark:#262626;
+    --accent-soft:#F4F4F5;
+    --gold:#A1A1AA;
+    --line:#E7E4E2;
+    --danger:#B4483C;
+    --radius:14px;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;}
+  #sgp-root{
+    font-family:'Inter',sans-serif;
+    color:var(--ink);
+    background:var(--bg);
+    min-height:100vh;
+    padding:28px 16px 60px;
+    line-height:1.5;
+  }
+  #sgp-root .wrap{max-width:760px;margin:0 auto;}
+  .brand{
+    display:flex;align-items:baseline;justify-content:space-between;
+    margin-bottom:22px;flex-wrap:wrap;gap:6px;
+  }
+  .brand-name{
+    font-family:'Space Grotesk',sans-serif;font-weight:700;
+    font-size:15px;letter-spacing:.06em;color:var(--ink);
+  }
+  .brand-tag{
+    font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--ink-faint);
+    letter-spacing:.02em;
+  }
+
+  .orbit-wrap{margin:8px 0 26px;}
+  .orbit-track{display:flex;align-items:center;gap:0;}
+  .orbit-node{
+    width:9px;height:9px;border-radius:50%;background:var(--line);
+    flex:0 0 auto;transition:background .25s, transform .25s;position:relative;
+  }
+  .orbit-node.done{background:var(--accent);}
+  .orbit-node.current{
+    background:var(--surface);border:2px solid var(--accent);width:11px;height:11px;
+    box-shadow:0 0 0 4px var(--accent-soft);
+  }
+  .orbit-line{flex:1 1 auto;height:1px;background:var(--line);min-width:6px;}
+  .orbit-line.done{background:var(--accent);}
+  .orbit-caption{
+    font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--ink-faint);
+    margin-top:8px;
+  }
+
+  .card{
+    background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);
+    padding:28px 26px;box-shadow:0 1px 2px rgba(28,25,23,.04);
+  }
+  .eyebrow{
+    font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.08em;
+    color:var(--accent-dark);text-transform:uppercase;margin:0 0 6px;
+  }
+  h2.step-title{
+    font-family:'Space Grotesk',sans-serif;font-size:22px;font-weight:600;
+    margin:0 0 4px;color:var(--ink);
+  }
+  .step-note{color:var(--ink-soft);font-size:13.5px;margin:0 0 22px;white-space:pre-line;}
+
+  .field{margin-bottom:20px;}
+  .field label.q{
+    display:block;font-weight:600;font-size:14.5px;margin-bottom:5px;color:var(--ink);
+  }
+  .field .hint{
+    font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:var(--ink-faint);
+    margin:2px 0 8px;
+  }
+  input[type=text], input[type=date], input[type=number], textarea, select{
+    width:100%;font-family:'Inter',sans-serif;font-size:14.5px;color:var(--ink);
+    background:#FBFBFA;border:1px solid var(--line);border-radius:9px;
+    padding:10px 12px;outline:none;transition:border-color .15s, background .15s;
+  }
+  input:focus, textarea:focus, select:focus{border-color:var(--accent);background:#fff;}
+  textarea{min-height:76px;resize:vertical;font-family:'Inter',sans-serif;}
+
+  .chip-grid{display:flex;flex-wrap:wrap;gap:8px;}
+  .chip{
+    font-family:'Inter',sans-serif;font-size:13.5px;color:var(--ink);
+    background:#FBFBFA;border:1px solid var(--line);border-radius:999px;
+    padding:8px 14px;cursor:pointer;user-select:none;transition:all .15s;
+  }
+  .chip:hover{border-color:var(--accent);}
+  .chip.selected{background:var(--accent-soft);border-color:var(--accent);color:var(--accent-dark);font-weight:600;}
+
+  table.exam-table{width:100%;border-collapse:collapse;margin-bottom:10px;}
+  table.exam-table th{
+    font-family:'IBM Plex Mono',monospace;font-size:10px;text-transform:uppercase;
+    color:var(--ink-faint);text-align:left;padding:4px 6px;font-weight:500;
+  }
+  table.exam-table td{padding:4px 6px;}
+  table.exam-table input{padding:7px 9px;font-size:13px;}
+  .row-remove{
+    background:none;border:none;color:var(--danger);cursor:pointer;font-size:16px;
+    padding:0 6px;
+  }
+  .add-row-btn{
+    font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--accent-dark);
+    background:none;border:1px dashed var(--accent);border-radius:8px;padding:6px 12px;
+    cursor:pointer;margin-right:8px;margin-bottom:6px;
+  }
+  .preset-btn{
+    font-family:'Inter',sans-serif;font-size:12.5px;color:var(--accent-dark);
+    background:var(--accent-soft);border:1px solid var(--accent);border-radius:999px;
+    padding:6px 13px;cursor:pointer;margin-right:8px;margin-bottom:6px;
+  }
+  .preset-row{margin-bottom:8px;}
+
+  .nav-row{display:flex;justify-content:space-between;align-items:center;margin-top:28px;gap:10px;}
+  .btn{
+    font-family:'Inter',sans-serif;font-weight:600;font-size:14px;border-radius:9px;
+    padding:11px 20px;cursor:pointer;border:none;transition:opacity .15s, transform .1s;
+  }
+  .btn:active{transform:scale(.98);}
+  .btn-primary{background:var(--accent);color:#fff;}
+  .btn-primary:hover{background:var(--accent-dark);}
+  .btn-ghost{background:none;color:var(--ink-soft);border:1px solid var(--line);}
+  .btn-ghost:hover{border-color:var(--ink-faint);}
+  .btn:disabled{opacity:.45;cursor:not-allowed;}
+
+  .autosave{
+    font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--ink-faint);
+    text-align:center;margin-top:14px;min-height:14px;transition:opacity .3s;
+  }
+
+  .landing-actions{display:flex;flex-direction:column;gap:12px;margin-top:22px;}
+  .required-mark{color:var(--danger);}
+  .confirm-box{
+    background:var(--accent-soft);border:1px solid var(--accent);border-radius:10px;
+    padding:16px;display:flex;gap:10px;align-items:flex-start;margin-top:6px;margin-bottom:14px;
+  }
+  .confirm-box input{width:auto;margin-top:3px;flex-shrink:0;}
+  .confirm-box label{font-size:13.5px;color:var(--ink);line-height:1.5;}
+
+  .warn-box{
+    background:#FBF3E7;border:1px solid var(--gold);border-radius:10px;
+    padding:12px 14px;font-size:12.5px;color:#6B4E12;margin-bottom:16px;
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    *{transition:none !important;}
+  }
+</style>
+
+<div id="sgp-root"><div class="wrap" id="sgp-app">Cargando…</div></div>
+
+<script>
+(function(){
+
+if (!window.storage) {
+  window.storage = {
+    set: function (key, value) {
+      try { localStorage.setItem(key, value); return Promise.resolve(); }
+      catch (e) { return Promise.reject(e); }
+    },
+    get: function (key) {
+      try { return Promise.resolve({ value: localStorage.getItem(key) }); }
+      catch (e) { return Promise.reject(e); }
+    }
+  };
+}
+
+// Pipeline de NURA Health (Apps Script) — misma URL /exec que los otros formularios.
+var NH_ENDPOINT = 'PEGAR_URL_EXEC_NURA_HEALTH';
+
+// ===== Candados de NURA Health (ver 05_DOCS/CANDADOS.md) =====================
+// El cuestionario NO envía mientras falte la URL del sistema o quede cualquier
+// texto legal [PENDIENTE]. Sin URL el envío se pierde en silencio (mode:no-cors
+// nunca lee la respuesta); sin texto legal se recogerían datos de salud bajo un
+// aviso que no existe. Las dos fallas caen del lado seguro: no se envía nada.
+function nhMotivoDeBloqueo_(){
+  if (/^PEGAR_/.test(NH_ENDPOINT)) return "este cuestionario todavía no está conectado al sistema de NURA Health.";
+  if (/\[PENDIENTE/.test(JSON.stringify(SECTIONS))) return "falta el texto legal de NURA Health (Aviso de Privacidad y consentimiento). No escribas datos todavía: no se van a poder enviar.";
+  return null;
+}
+document.addEventListener('DOMContentLoaded', function(){
+  var m = nhMotivoDeBloqueo_(); if (!m) return;
+  var d = document.createElement('div');
+  d.setAttribute('role', 'alert');
+  d.style.cssText = 'position:sticky;top:0;z-index:9999;background:#fff4e5;color:#5c3d00;border-bottom:2px solid #b26a00;padding:12px 16px;font:600 14px/1.4 system-ui,sans-serif;text-align:center';
+  d.textContent = 'CUESTIONARIO NO OPERATIVO — ' + m;
+  document.body.insertBefore(d, document.body.firstChild);
+});
+var TIPO_DE_FORMULARIO = 'seguimiento_presencial';
+var DRAFT_KEY = 'sgp_borrador_en_curso';
+
+var PROCEDIMIENTOS_OPCIONES = [
+  "Toxina botulínica (Botox)","Ácido hialurónico","Dermapen / microneedling",
+  "Lipoenzimas","Terapia con células madre","Terapia con exosomas","Implante de placenta",
+  "Péptidos (BPC-157/TB-500/otros)","Bloqueo o infiltración articular","Ninguno por ahora"
+];
+
+function presetRows(list){ return list.map(function(r){ return Object.assign({}, r); }); }
+
+var SECTIONS = [
+  { id:"identificacion", eyebrow:"Identificación rápida", title:"Datos del paciente",
+    note:"El teléfono es lo que usa el sistema para encontrar automáticamente el plan anterior de este paciente en su expediente — sin eso, no puede buscarlo solo.",
+    fields:[
+      {id:"nombre_completo", type:"text", label:"Nombre completo", required:true},
+      {id:"telefono", type:"text", label:"Teléfono / WhatsApp", required:true},
+      {id:"fecha_consulta", type:"date", label:"Fecha de esta consulta", required:true, defaultToday:true}
+    ]},
+
+  { id:"reevaluacion", eyebrow:"Sección 1", title:"Reevaluación general", fields:[
+      {id:"peso_actual", type:"number", label:"Peso actual", hint:"kg"},
+      {id:"cambios_antropometricos", type:"textarea", label:"Cambios antropométricos relevantes",
+        hint:"Circunferencias, % grasa, InBody, etc. — si no se midió hoy, déjalo en blanco"},
+      {id:"adherencia_alimentacion", type:"radio", label:"Adherencia a la alimentación",
+        options:["Excelente","Buena, con ajustes","Irregular","Baja"]},
+      {id:"adherencia_entrenamiento", type:"radio", label:"Adherencia al entrenamiento",
+        options:["Excelente","Buena, con ajustes","Irregular","Baja"]},
+      {id:"adherencia_suplementacion", type:"radio", label:"Adherencia a la suplementación",
+        options:["Excelente","Buena, con ajustes","Irregular","Baja"]},
+      {id:"cambios_salud", type:"textarea", label:"¿Hubo cambios en salud, medicamentos o lesiones desde la última consulta?"},
+      {id:"en_farmacologia", type:"radio", label:"¿Sigue actualmente algún protocolo farmacológico indicado por el médico de NURA Health?", options:["Sí","No"]},
+      {id:"farmaco_tolerancia", type:"textarea", label:"Tolerancia / efectos reportados",
+        showIf:function(a){return a.en_farmacologia==="Sí";}}
+    ]},
+
+  { id:"fisica_dirigida", eyebrow:"Sección 2 · Opcional", title:"Reevaluación física dirigida",
+    note:"Solo si esta consulta incluye revisión de una lesión o zona específica (ej. seguimiento de una rehabilitación). Si no aplica, deja esta sección en blanco y sigue.",
+    fields:[
+      {id:"escala_dolor", type:"scale", label:"Escala de dolor actual (EVA)", left:"Sin dolor", right:"Máximo dolor"},
+      {id:"rom_tabla", type:"table", label:"ROM por articulación (si aplica)",
+        columns:[["region","Movimiento"],["lado","Lado"],["activo","Activo (°)"],["pasivo","Pasivo (°)"],["dolor","Dolor (Sí/No + dónde)"]],
+        presets:[
+          {label:"+ Hombro", rows:presetRows([
+            {region:"Flexión de hombro"},{region:"Extensión de hombro"},{region:"Abducción de hombro"},
+            {region:"Rotación interna de hombro"},{region:"Rotación externa de hombro"}])},
+          {label:"+ Codo/Muñeca", rows:presetRows([
+            {region:"Flexión de codo"},{region:"Extensión de codo"},{region:"Pronación de antebrazo"},
+            {region:"Supinación de antebrazo"},{region:"Flexión de muñeca"},{region:"Extensión de muñeca"}])},
+          {label:"+ Cadera", rows:presetRows([
+            {region:"Flexión de cadera"},{region:"Extensión de cadera"},{region:"Abducción de cadera"},
+            {region:"Rotación interna de cadera"},{region:"Rotación externa de cadera"}])},
+          {label:"+ Rodilla", rows:presetRows([{region:"Flexión de rodilla"},{region:"Extensión de rodilla"}])},
+          {label:"+ Tobillo", rows:presetRows([
+            {region:"Flexión dorsal de tobillo"},{region:"Flexión plantar de tobillo"},
+            {region:"Inversión de tobillo"},{region:"Eversión de tobillo"}])},
+          {label:"+ Columna cervical", rows:presetRows([
+            {region:"Flexión cervical"},{region:"Extensión cervical"},
+            {region:"Rotación cervical"},{region:"Inclinación lateral cervical"}])},
+          {label:"+ Columna lumbar", rows:presetRows([
+            {region:"Flexión lumbar"},{region:"Extensión lumbar"},
+            {region:"Inclinación lateral lumbar"},{region:"Rotación lumbar"}])}
+        ]},
+      {id:"ortopedicas_tabla", type:"table", label:"Pruebas ortopédicas especiales (si aplica)",
+        columns:[["prueba","Prueba"],["region","Región"],["lado","Lado"],["resultado","Resultado (+/-)"],["notas","Notas"]],
+        presets:[
+          {label:"+ Hombro", rows:presetRows([
+            {prueba:"Neer", region:"Hombro"},{prueba:"Hawkins-Kennedy", region:"Hombro"},
+            {prueba:"Jobe (supraespinoso)", region:"Hombro"},{prueba:"Speed", region:"Hombro"},{prueba:"Drop Arm", region:"Hombro"}])},
+          {label:"+ Rodilla", rows:presetRows([
+            {prueba:"Lachman", region:"Rodilla"},{prueba:"Cajón anterior", region:"Rodilla"},
+            {prueba:"Cajón posterior", region:"Rodilla"},{prueba:"McMurray", region:"Rodilla"},
+            {prueba:"Estrés en valgo", region:"Rodilla"},{prueba:"Estrés en varo", region:"Rodilla"}])},
+          {label:"+ Columna/Lumbar", rows:presetRows([
+            {prueba:"Lasègue (SLR)", region:"Columna lumbar"},{prueba:"Bragard", region:"Columna lumbar"},
+            {prueba:"Spurling", region:"Columna cervical"},{prueba:"Slump test", region:"Columna lumbar"}])},
+          {label:"+ Cadera", rows:presetRows([
+            {prueba:"FABER (Patrick)", region:"Cadera"},{prueba:"Trendelenburg", region:"Cadera"},{prueba:"Thomas test", region:"Cadera"}])},
+          {label:"+ Tobillo", rows:presetRows([
+            {prueba:"Cajón anterior de tobillo", region:"Tobillo"},{prueba:"Talar tilt", region:"Tobillo"},{prueba:"Squeeze test", region:"Tobillo"}])}
+        ]}
+    ]},
+
+  { id:"laboratorio", eyebrow:"Sección 3", title:"Laboratorio / imagenología nuevos", fields:[
+      {id:"labs_tipo", type:"checkbox", label:"Estudios nuevos disponibles desde la última vez", hint:"Marca todos los que tengas a la vista",
+        options:["BHC (biometría hemática)","Química sanguínea (QS6)","Función hepática (TGO/TGP/GGT)","Perfil de lípidos","Glucosa / insulina / HOMA-IR","HbA1c","TSH / T3 libre / T4","Testosterona total y libre","Estradiol / progesterona","Cortisol matutino","Vitamina D3 (25-OH)","EGO","Rayos X / resonancia / ultrasonido","Otros","Ninguno nuevo"]},
+      {id:"labs_notas", type:"textarea", label:"Notas sobre laboratorio/imagenología"}
+    ]},
+
+  { id:"plan", eyebrow:"Sección 4", title:"Impresión actual y ajustes del plan", fields:[
+      {id:"impresion_actual", type:"textarea", label:"Impresión clínica de esta consulta", required:true},
+      {id:"ajustes_solicitados", type:"textarea", label:"¿Qué se va a ajustar del plan?",
+        hint:"Kcal/macros, split de entrenamiento, suplementación, progresión de fase, lo que corresponda"},
+      {id:"procedimientos_planeados", type:"checkbox", label:"Procedimientos planeados en esta visita o próximas",
+        hint:"Si NURA Health ya tiene el texto de consentimiento validado para el procedimiento, se genera el documento para imprimir y firmar. Si no lo tiene, no se genera nada y el correo al médico lo avisa.",
+        options:PROCEDIMIENTOS_OPCIONES}
+    ]},
+
+  { id:"directrices_ajuste", eyebrow:"Sección 4·B", title:"Directrices del ajuste (campos dirigidos)",
+    note:"Llena solo los que cambian en esta revisión. Todo lo que definas aquí el sistema lo toma como orden confirmada; lo que dejes vacío se mantiene igual al plan anterior.", fields:[
+      {id:"kcal_entreno", type:"number", label:"Nuevas kcal — día de entrenamiento", hint:"Dejar vacío = se mantiene"},
+      {id:"kcal_descanso", type:"number", label:"Nuevas kcal — día de descanso", hint:"Dejar vacío = se mantiene"},
+      {id:"proteina_objetivo", type:"text", label:"Nueva proteína objetivo", hint:"g/kg o g/día. Vacío = se mantiene"},
+      {id:"regla_carbo_grasa", type:"text", label:"Nueva regla de carbohidrato/grasa"},
+      {id:"split_preferido", type:"textarea", label:"Cambios al split de entrenamiento", hint:"Vacío = se mantiene el split anterior", rows:2},
+      {id:"ejercicios_evitar", type:"textarea", label:"Ejercicios o patrones a evitar (nuevos o actualizados)", rows:2},
+      {id:"cardio_directriz", type:"textarea", label:"Cambios al cardio", rows:2},
+      {id:"suplementos_indicar", type:"textarea", label:"Suplementos a agregar/indicar", rows:2},
+      {id:"suplementos_mantener_quitar", type:"textarea", label:"Suplementos a mantener / quitar", rows:2},
+      {id:"interaccion_evaluada", type:"textarea", label:"Interacción o alerta que ya evalué (no dejar pendiente)", rows:2},
+      {id:"consentimiento_estado", type:"text", label:"Estado del consentimiento de procedimientos",
+        showIf:function(a){return (a.procedimientos_planeados||[]).some(function(v){return v!=="Ninguno por ahora";});}},
+      {id:"labs_estado", type:"text", label:"Estado de laboratorios", hint:"Ej.: solicitados hoy, revisar en próxima visita"},
+      {id:"seguimiento_semanas", type:"list", label:"Próxima revisión sugerida", options:["2 semanas","3 semanas","4 semanas","6 semanas","8 semanas","12 semanas"]},
+      {id:"indicaciones_particulares", type:"textarea", label:"Otras indicaciones particulares (texto libre)",
+        hint:"Solo para algo no cubierto por los campos de arriba", rows:2}
+    ]},
+
+  { id:"plan_anterior", eyebrow:"Sección 5", title:"Plan anterior (respaldo manual opcional)",
+    note:"El sistema busca automáticamente el plan más reciente de este paciente en su expediente (por teléfono). Usa el campo de abajo SOLO si quieres agregar contexto extra, o si el paciente todavía no tiene expediente digital (primera vez que se usa este formulario con él).",
+    fields:[
+      {id:"plan_anterior_manual", type:"textarea", label:"Contexto adicional sobre el plan anterior (opcional)"}
+    ]},
+
+  { id:"consentimiento", eyebrow:"Último paso", title:"Aviso de privacidad y consentimiento",
+    note:"[PENDIENTE: resumen del Aviso de Privacidad de NURA Health. Lo redacta y valida el abogado de NURA. Debe declarar el tratamiento de datos de salud para elaborar el plan, el uso de un proveedor de inteligencia artificial como encargado que procesa esos datos, y el consentimiento expreso por separado. Mientras este texto no exista, este cuestionario no envía.]",
+    fields:[
+      {id:"medico_responsable", type:"text", label:"Nombre de quien levanta este seguimiento", required:true},
+      {id:"aviso_privacidad_aceptado", type:"confirm", required:true,
+        label:"[PENDIENTE: texto de aceptación del Aviso de Privacidad de NURA Health — lo valida el abogado de NURA]"},
+      {id:"consentimiento_ia", type:"confirm", required:true, label:"[PENDIENTE: confirmación de que el paciente otorgó su consentimiento EXPRESO para el procesamiento de sus datos de salud con apoyo de un sistema de inteligencia artificial — lo valida el abogado de NURA]"},
+      {id:"consentimiento_procedimientos_confirm", type:"confirm",
+        label:"[PENDIENTE: texto de confirmación sobre información de riesgos, beneficios y alternativas de los procedimientos marcados — lo valida el abogado de NURA]",
+        showIf:function(a){return (a.procedimientos_planeados||[]).some(function(v){return v!=="Ninguno por ahora";});}},
+      {id:"firma_confirma", type:"confirm", required:true,
+        label:"Confirmo que este seguimiento fue obtenido mediante interrogatorio y revisión directa del paciente, y que la información es verídica y completa."}
+    ]}
+];
+
+function fieldById(id){
+  for (var s=0;s<SECTIONS.length;s++){
+    for (var f=0;f<SECTIONS[s].fields.length;f++){
+      if (SECTIONS[s].fields[f].id===id) return SECTIONS[s].fields[f];
+    }
+  }
+  return null;
+}
+
+var state = { view:"loading", answers:{}, step:0, saveMsg:"", hayBorrador:false };
+
+function getVisibleSections(){
+  return SECTIONS.filter(function(s){ return !s.visibleIf || s.visibleIf(state.answers); });
+}
+
+function esc(str){
+  return String(str==null?"":str).replace(/[&<>"]/g, function(c){
+    return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];
+  });
+}
+
+function debounce(fn, ms){
+  var t; return function(){ var args=arguments; clearTimeout(t); t=setTimeout(function(){fn.apply(null,args);}, ms); };
+}
+var doAutosave = debounce(function(){ saveDraft(); }, 700);
+
+function saveDraft(){
+  var payload = { answers: state.answers, updatedAt: new Date().toISOString() };
+  window.storage.set(DRAFT_KEY, JSON.stringify(payload)).then(function(){
+    state.saveMsg = "Guardado ✓";
+    renderSaveMsg();
+    setTimeout(function(){ state.saveMsg=""; renderSaveMsg(); }, 1500);
+  }).catch(function(){
+    state.saveMsg = "No se pudo guardar. Revisa tu conexión.";
+    renderSaveMsg();
+  });
+}
+
+function finalizeSubmission(){
+  var nhBloqueo = nhMotivoDeBloqueo_();
+  if (nhBloqueo) { var nhErr = new Error(nhBloqueo); nhErr.nhBloqueo = true; return Promise.reject(nhErr); }
+  var payload = Object.assign({}, state.answers, { formType: TIPO_DE_FORMULARIO });
+  return fetch(NH_ENDPOINT, {
+    method: "POST",
+    mode: "no-cors",
+    headers: { "Content-Type": "text/plain;charset=utf-8" },
+    body: JSON.stringify(payload)
+  });
+}
+
+function applyDefaults(){
+  var todayField = fieldById("fecha_consulta");
+  if (todayField && !state.answers.fecha_consulta){
+    state.answers.fecha_consulta = new Date().toISOString().slice(0,10);
+  }
+}
+
+function init(){
+  window.storage.get(DRAFT_KEY).then(function(res){
+    state.hayBorrador = !!(res && res.value);
+    state.view = "landing";
+    render();
+  }).catch(function(){
+    state.view = "landing";
+    render();
+  });
+}
+
+function empezarNueva(){
+  state.answers = {};
+  state.step = 0;
+  applyDefaults();
+  state.view = "form";
+  render();
+}
+
+function reanudarBorrador(){
+  window.storage.get(DRAFT_KEY).then(function(res){
+    if (res && res.value){
+      try { state.answers = JSON.parse(res.value).answers || {}; } catch(e){ state.answers = {}; }
+    }
+    applyDefaults();
+    state.step = 0;
+    state.view = "form";
+    render();
+  });
+}
+
+function sectionErrors(section){
+  var errs = [];
+  section.fields.forEach(function(f){
+    if (f.showIf && !f.showIf(state.answers)) return;
+    if (!f.required) return;
+    var v = state.answers[f.id];
+    if (f.type==="confirm"){ if(!v) errs.push(f.id); return; }
+    if (v===undefined || v===null || v===""){ errs.push(f.id); }
+  });
+  return errs;
+}
+
+function renderField(f){
+  if (f.showIf && !f.showIf(state.answers)) return "";
+  var val = state.answers[f.id];
+  var reqMark = f.required ? ' <span class="required-mark">*</span>' : "";
+  var hint = f.hint ? '<div class="hint">'+esc(f.hint)+'</div>' : "";
+
+  if (f.type==="text" || f.type==="date"){
+    return '<div class="field">'+
+      '<label class="q">'+esc(f.label)+reqMark+'</label>'+hint+
+      '<input type="'+f.type+'" value="'+esc(val||"")+'" oninput="SGP.onTextInput(\''+f.id+'\', this.value)">'+
+      '</div>';
+  }
+  if (f.type==="number"){
+    return '<div class="field">'+
+      '<label class="q">'+esc(f.label)+reqMark+'</label>'+hint+
+      '<input type="number" step="'+(f.step||1)+'" value="'+esc(val||"")+'" oninput="SGP.onTextInput(\''+f.id+'\', this.value)">'+
+      '</div>';
+  }
+  if (f.type==="textarea"){
+    return '<div class="field">'+
+      '<label class="q">'+esc(f.label)+reqMark+'</label>'+hint+
+      '<textarea oninput="SGP.onTextInput(\''+f.id+'\', this.value)">'+esc(val||"")+'</textarea>'+
+      '</div>';
+  }
+  // "list" se dibuja igual que "radio": selección única con chips. Sin este caso
+  // los campos type:"list" no se renderizaban y, si eran required, bloqueaban el
+  // avance de sección pidiendo un campo que nunca llegaba a verse.
+  if (f.type==="radio" || f.type==="list"){
+    var chips = f.options.map(function(o){
+      var sel = val===o ? " selected":"";
+      return '<div class="chip'+sel+'" onclick="SGP.onChoice(\''+f.id+'\',\''+esc(o).replace(/'/g,"\\'")+'\',false)">'+esc(o)+'</div>';
+    }).join("");
+    return '<div class="field"><label class="q">'+esc(f.label)+reqMark+'</label>'+hint+'<div class="chip-grid">'+chips+'</div></div>';
+  }
+  if (f.type==="checkbox"){
+    var arr = val || [];
+    var chips2 = f.options.map(function(o){
+      var sel = arr.indexOf(o)>-1 ? " selected":"";
+      return '<div class="chip'+sel+'" onclick="SGP.onChoice(\''+f.id+'\',\''+esc(o).replace(/'/g,"\\'")+'\',true)">'+esc(o)+'</div>';
+    }).join("");
+    return '<div class="field"><label class="q">'+esc(f.label)+reqMark+'</label>'+hint+'<div class="chip-grid">'+chips2+'</div></div>';
+  }
+  if (f.type==="scale"){
+    var n = val || null;
+    var btns = "";
+    for (var i=0;i<=10;i++){
+      btns += '<div class="chip'+(n==i?" selected":"")+'" style="flex:1;text-align:center;" onclick="SGP.onChoice(\''+f.id+'\','+i+',false)">'+i+'</div>';
+    }
+    return '<div class="field"><label class="q">'+esc(f.label)+reqMark+'</label>'+
+      '<div class="chip-grid" style="flex-wrap:nowrap;">'+btns+'</div>'+
+      '<div class="hint" style="display:flex;justify-content:space-between;"><span>'+esc(f.left)+'</span><span>'+esc(f.right)+'</span></div></div>';
+  }
+  if (f.type==="table"){
+    var rows = val || [];
+    var head = '<tr>'+f.columns.map(function(c){return '<th>'+esc(c[1])+'</th>';}).join("")+'<th></th></tr>';
+    var body = rows.map(function(row, idx){
+      return '<tr>'+f.columns.map(function(c){
+        return '<td><input type="text" value="'+esc(row[c[0]]||"")+'" oninput="SGP.onTableInput(\''+f.id+'\','+idx+',\''+c[0]+'\',this.value)"></td>';
+      }).join("")+'<td><button type="button" class="row-remove" onclick="SGP.onTableRemove(\''+f.id+'\','+idx+')">✕</button></td></tr>';
+    }).join("");
+    var presetBtns = "";
+    if (f.presets && f.presets.length){
+      presetBtns = '<div class="preset-row">'+f.presets.map(function(p, pidx){
+        return '<button type="button" class="preset-btn" onclick="SGP.onTablePreset(\''+f.id+'\','+pidx+')">'+esc(p.label)+'</button>';
+      }).join("")+'</div>';
+    }
+    return '<div class="field"><label class="q">'+esc(f.label)+reqMark+'</label>'+hint+
+      presetBtns+
+      '<table class="exam-table"><thead>'+head+'</thead><tbody>'+body+'</tbody></table>'+
+      '<button type="button" class="add-row-btn" onclick="SGP.onTableAdd(\''+f.id+'\')">+ agregar renglón</button></div>';
+  }
+  if (f.type==="confirm"){
+    var checked = val ? "checked" : "";
+    return '<div class="confirm-box"><input type="checkbox" '+checked+' onchange="SGP.onConfirm(\''+f.id+'\',this.checked)">'+
+      '<label>'+esc(f.label)+'</label></div>';
+  }
+  return "";
+}
+
+function renderOrbit(){
+  var secs = getVisibleSections();
+  var nodes = "";
+  secs.forEach(function(s, i){
+    var cls = i < state.step ? "done" : (i===state.step ? "current" : "");
+    nodes += '<div class="orbit-node '+cls+'"></div>';
+    if (i < secs.length-1){
+      nodes += '<div class="orbit-line '+(i<state.step?"done":"")+'"></div>';
+    }
+  });
+  return '<div class="orbit-wrap"><div class="orbit-track">'+nodes+'</div>'+
+    '<div class="orbit-caption">PASO '+(state.step+1)+' DE '+secs.length+'</div></div>';
+}
+
+function renderSaveMsg(){
+  var el = document.getElementById("sgp-savemsg");
+  if (el) el.textContent = state.saveMsg;
+}
+
+function renderLanding(){
+  return ''+
+    '<div class="brand"><div class="brand-name">NURA HEALTH</div>'+
+    '<div class="brand-tag">Seguimiento Presencial · Uso interno</div></div>'+
+    '<div class="card">'+
+    '<p class="eyebrow">Consulta de seguimiento en persona</p>'+
+    '<h2 class="step-title">Seguimiento Presencial</h2>'+
+    '<p class="step-note">Para pacientes ya conocidos, con plan previo. El sistema busca automáticamente el plan más reciente del paciente en su expediente (por teléfono) y lo usa como base para la actualización — no hace falta pegarlo a mano.</p>'+
+    '<div class="warn-box">Este formulario no sustituye tu criterio clínico ni ningún consentimiento informado firmado en papel.</div>'+
+    '<div class="landing-actions">'+
+    '<button class="btn btn-primary" onclick="SGP.empezarNueva()">Nuevo Seguimiento Presencial</button>'+
+    (state.hayBorrador ? '<button class="btn btn-ghost" onclick="SGP.reanudarBorrador()">Reanudar borrador guardado</button>' : '')+
+    '</div>'+
+    '</div>';
+}
+
+function renderForm(){
+  var secs = getVisibleSections();
+  if (state.step >= secs.length) state.step = secs.length-1;
+  var section = secs[state.step];
+  var isLast = state.step === secs.length-1;
+  var isFirst = state.step === 0;
+
+  var fieldsHtml = section.fields.map(renderField).join("");
+
+  var out = "";
+  out += '<div class="brand"><div class="brand-name">NURA HEALTH</div>'+
+    '<div class="brand-tag">Seguimiento Presencial · Uso interno</div></div>';
+  out += renderOrbit();
+  out += '<div class="card">';
+  out += '<p class="eyebrow">'+esc(section.eyebrow)+'</p>';
+  out += '<h2 class="step-title">'+esc(section.title)+'</h2>';
+  if (section.note) out += '<p class="step-note">'+esc(section.note)+'</p>';
+  out += fieldsHtml;
+  out += '<div class="nav-row">';
+  out += isFirst ? '<button class="btn btn-ghost" onclick="SGP.backToLanding()">← Inicio</button>' : '<button class="btn btn-ghost" onclick="SGP.prevStep()">← Atrás</button>';
+  out += isLast
+    ? '<button class="btn btn-primary" onclick="SGP.submitForm()">Enviar Seguimiento</button>'
+    : '<button class="btn btn-primary" onclick="SGP.nextStep()">Siguiente →</button>';
+  out += '</div>';
+  out += '<div class="autosave" id="sgp-savemsg">'+esc(state.saveMsg)+'</div>';
+  out += '</div>';
+  return out;
+}
+
+function renderDone(){
+  return '<div class="brand"><div class="brand-name">NURA HEALTH</div></div>'+
+    '<div class="card">'+
+    '<p class="eyebrow">Listo</p>'+
+    '<h2 class="step-title">Seguimiento enviado</h2>'+
+    '<p class="step-note">Se está generando el Plan Integral actualizado usando el plan anterior encontrado en el expediente del paciente, la nota de evolución y, si existe texto validado, los consentimientos informados. Revisa tu correo o el Sheet en unos momentos.</p>'+
+    '<div class="landing-actions"><button class="btn btn-primary" onclick="SGP.empezarNueva()">Levantar otro seguimiento</button></div>'+
+    '</div>';
+}
+
+function render(){
+  var app = document.getElementById("sgp-app");
+  if (state.view==="loading") app.innerHTML = "Cargando…";
+  else if (state.view==="landing") app.innerHTML = renderLanding();
+  else if (state.view==="form") app.innerHTML = renderForm();
+  else if (state.view==="done") app.innerHTML = renderDone();
+}
+
+var SGP = {
+  empezarNueva: empezarNueva,
+  reanudarBorrador: reanudarBorrador,
+  backToLanding: function(){ state.view="landing"; render(); },
+  onTextInput: function(id, value){
+    state.answers[id] = value;
+    doAutosave();
+  },
+  onChoice: function(id, value, multi){
+    if (multi){
+      var arr = (state.answers[id]||[]).slice();
+      var idx = arr.indexOf(value);
+      if (idx>-1) arr.splice(idx,1); else arr.push(value);
+      state.answers[id] = arr;
+    } else {
+      state.answers[id] = (typeof value==="string") ? value : Number(value);
+    }
+    doAutosave();
+    render();
+  },
+  onConfirm: function(id, checked){
+    state.answers[id] = checked;
+    doAutosave();
+  },
+  onTableAdd: function(id){
+    var arr = (state.answers[id]||[]).slice();
+    arr.push({});
+    state.answers[id]=arr;
+    render();
+  },
+  onTablePreset: function(id, presetIdx){
+    var f = fieldById(id);
+    var preset = f.presets[presetIdx];
+    var arr = (state.answers[id]||[]).slice();
+    state.answers[id] = arr.concat(preset.rows.map(function(r){ return Object.assign({}, r); }));
+    doAutosave();
+    render();
+  },
+  onTableRemove: function(id, idx){
+    var arr = (state.answers[id]||[]).slice();
+    arr.splice(idx,1);
+    state.answers[id]=arr;
+    doAutosave();
+    render();
+  },
+  onTableInput: function(id, idx, col, value){
+    var arr = (state.answers[id]||[]).slice();
+    if (!arr[idx]) arr[idx]={};
+    arr[idx][col]=value;
+    state.answers[id]=arr;
+    doAutosave();
+  },
+  nextStep: function(){
+    var secs = getVisibleSections();
+    var errs = sectionErrors(secs[state.step]);
+    if (errs.length){
+      alert("Por favor completa los campos obligatorios antes de continuar.");
+      return;
+    }
+    if (state.step < secs.length-1){ state.step++; window.scrollTo(0,0); render(); }
+  },
+  prevStep: function(){
+    if (state.step>0){ state.step--; window.scrollTo(0,0); render(); }
+  },
+  submitForm: function(){
+    // Guarda antiduplicado: un doble clic en "Enviar" creaba dos envíos reales
+    // (y dos expedientes distintos del mismo paciente).
+    if (state.enviando) return;
+    var secs = getVisibleSections();
+    var errs = sectionErrors(secs[state.step]);
+    if (errs.length){
+      alert("Por favor completa los campos obligatorios antes de enviar.");
+      return;
+    }
+    state.enviando = true;
+    var btns = document.querySelectorAll('.btn-primary');
+    for (var i=0;i<btns.length;i++){ btns[i].disabled = true; btns[i].textContent = "Enviando..."; }
+    finalizeSubmission().then(function(){
+      state.enviando = false;
+      window.storage.set(DRAFT_KEY, "");
+      state.view = "done";
+      render();
+    }).catch(function(err){
+      state.enviando = false;
+      render();
+      // Si el candado de NURA Health detuvo el envío, se dice ESO: culpar a la
+      // conexión mandaría a reintentar algo que nunca va a salir.
+      alert(err && err.nhBloqueo ? err.message : "No se pudo enviar. Revisa tu conexión e intenta de nuevo.");
+    });
+  }
+};
+window.SGP = SGP;
+
+init();
+
+})();
+</script>

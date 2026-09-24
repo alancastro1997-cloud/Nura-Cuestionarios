@@ -1,0 +1,818 @@
+<!-- NURA Health - Cuestionarios | Copyright (C) 2026 NURA Cells | SPDX-License-Identifier: AGPL-3.0-or-later -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+
+<!--
+  HISTORIA CLINICA DIGITAL — NURA Health
+  Uso INTERNO: la llena el Dr. Castro (o su equipo clínico) durante la consulta
+  presencial, en vez de escribir la Historia Clínica Integral en Word y luego
+  pegar el texto en el Sheet. Reemplaza ese paso manual de punta a punta:
+  al enviar, esto llega directo al mismo pipeline (Code.gs) que ya arma el
+  Plan Integral con Claude, crea/actualiza el expediente del paciente, y
+  genera el documento de consentimiento informado de cada procedimiento marcado
+  SOLO si NURA Health ya tiene su texto validado; si no, el correo al médico lo avisa
+  (ver 05_DOCS/CANDADOS.md).
+
+  Esta NO es la Historia Clínica Integral completa que exige un caso complejo
+  de sub-especialidad — es el set de datos de exploración física + ficha de
+  identificación que la NOM-004-SSA3-2012 pide como contenido mínimo, más los
+  campos propios de medicina del deporte/rehabilitación (ROM, Daniels,
+  dermatomas/miotomas, pruebas ortopédicas). Si un caso requiere algo muy
+  particular que no está aquí, se sigue pudiendo pegar texto libre en el
+  campo de "Notas clínicas adicionales" de la Sección 2.
+-->
+
+<style>
+  :root{
+    --bg:#F3F1EF;
+    --surface:#FFFFFF;
+    --ink:#1C1917;
+    --ink-soft:#57534E;
+    --ink-faint:#8A8580;
+    --accent:#404040;
+    --accent-dark:#262626;
+    --accent-soft:#F4F4F5;
+    --gold:#A1A1AA;
+    --line:#E7E4E2;
+    --danger:#B4483C;
+    --radius:14px;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;}
+  #hcd-root{
+    font-family:'Inter',sans-serif;
+    color:var(--ink);
+    background:var(--bg);
+    min-height:100vh;
+    padding:28px 16px 60px;
+    line-height:1.5;
+  }
+  #hcd-root .wrap{max-width:760px;margin:0 auto;}
+  .brand{
+    display:flex;align-items:baseline;justify-content:space-between;
+    margin-bottom:22px;flex-wrap:wrap;gap:6px;
+  }
+  .brand-name{
+    font-family:'Space Grotesk',sans-serif;font-weight:700;
+    font-size:15px;letter-spacing:.06em;color:var(--ink);
+  }
+  .brand-tag{
+    font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--ink-faint);
+    letter-spacing:.02em;
+  }
+
+  .orbit-wrap{margin:8px 0 26px;}
+  .orbit-track{display:flex;align-items:center;gap:0;}
+  .orbit-node{
+    width:9px;height:9px;border-radius:50%;background:var(--line);
+    flex:0 0 auto;transition:background .25s, transform .25s;position:relative;
+  }
+  .orbit-node.done{background:var(--accent);}
+  .orbit-node.current{
+    background:var(--surface);border:2px solid var(--accent);width:11px;height:11px;
+    box-shadow:0 0 0 4px var(--accent-soft);
+  }
+  .orbit-line{flex:1 1 auto;height:1px;background:var(--line);min-width:6px;}
+  .orbit-line.done{background:var(--accent);}
+  .orbit-caption{
+    font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--ink-faint);
+    margin-top:8px;
+  }
+
+  .card{
+    background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);
+    padding:28px 26px;box-shadow:0 1px 2px rgba(28,25,23,.04);
+  }
+  .eyebrow{
+    font-family:'IBM Plex Mono',monospace;font-size:11px;letter-spacing:.08em;
+    color:var(--accent-dark);text-transform:uppercase;margin:0 0 6px;
+  }
+  h2.step-title{
+    font-family:'Space Grotesk',sans-serif;font-size:22px;font-weight:600;
+    margin:0 0 4px;color:var(--ink);
+  }
+  .step-note{color:var(--ink-soft);font-size:13.5px;margin:0 0 22px;white-space:pre-line;}
+
+  .field{margin-bottom:20px;}
+  .field label.q{
+    display:block;font-weight:600;font-size:14.5px;margin-bottom:5px;color:var(--ink);
+  }
+  .field .hint{
+    font-family:'IBM Plex Mono',monospace;font-size:11.5px;color:var(--ink-faint);
+    margin:2px 0 8px;
+  }
+  input[type=text], input[type=date], input[type=number], textarea, select{
+    width:100%;font-family:'Inter',sans-serif;font-size:14.5px;color:var(--ink);
+    background:#FBFBFA;border:1px solid var(--line);border-radius:9px;
+    padding:10px 12px;outline:none;transition:border-color .15s, background .15s;
+  }
+  input:focus, textarea:focus, select:focus{border-color:var(--accent);background:#fff;}
+  textarea{min-height:76px;resize:vertical;font-family:'Inter',sans-serif;}
+
+  .chip-grid{display:flex;flex-wrap:wrap;gap:8px;}
+  .chip{
+    font-family:'Inter',sans-serif;font-size:13.5px;color:var(--ink);
+    background:#FBFBFA;border:1px solid var(--line);border-radius:999px;
+    padding:8px 14px;cursor:pointer;user-select:none;transition:all .15s;
+  }
+  .chip:hover{border-color:var(--accent);}
+  .chip.selected{background:var(--accent-soft);border-color:var(--accent);color:var(--accent-dark);font-weight:600;}
+
+  table.exam-table{width:100%;border-collapse:collapse;margin-bottom:10px;}
+  table.exam-table th{
+    font-family:'IBM Plex Mono',monospace;font-size:10px;text-transform:uppercase;
+    color:var(--ink-faint);text-align:left;padding:4px 6px;font-weight:500;
+  }
+  table.exam-table td{padding:4px 6px;}
+  table.exam-table input{padding:7px 9px;font-size:13px;}
+  .row-remove{
+    background:none;border:none;color:var(--danger);cursor:pointer;font-size:16px;
+    padding:0 6px;
+  }
+  .add-row-btn{
+    font-family:'IBM Plex Mono',monospace;font-size:12px;color:var(--accent-dark);
+    background:none;border:1px dashed var(--accent);border-radius:8px;padding:6px 12px;
+    cursor:pointer;margin-right:8px;margin-bottom:6px;
+  }
+  .preset-btn{
+    font-family:'Inter',sans-serif;font-size:12.5px;color:var(--accent-dark);
+    background:var(--accent-soft);border:1px solid var(--accent);border-radius:999px;
+    padding:6px 13px;cursor:pointer;margin-right:8px;margin-bottom:6px;
+  }
+  .preset-row{margin-bottom:8px;}
+
+  .nav-row{display:flex;justify-content:space-between;align-items:center;margin-top:28px;gap:10px;}
+  .btn{
+    font-family:'Inter',sans-serif;font-weight:600;font-size:14px;border-radius:9px;
+    padding:11px 20px;cursor:pointer;border:none;transition:opacity .15s, transform .1s;
+  }
+  .btn:active{transform:scale(.98);}
+  .btn-primary{background:var(--accent);color:#fff;}
+  .btn-primary:hover{background:var(--accent-dark);}
+  .btn-ghost{background:none;color:var(--ink-soft);border:1px solid var(--line);}
+  .btn-ghost:hover{border-color:var(--ink-faint);}
+  .btn:disabled{opacity:.45;cursor:not-allowed;}
+
+  .autosave{
+    font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--ink-faint);
+    text-align:center;margin-top:14px;min-height:14px;transition:opacity .3s;
+  }
+
+  .landing-actions{display:flex;flex-direction:column;gap:12px;margin-top:22px;}
+  .required-mark{color:var(--danger);}
+  .confirm-box{
+    background:var(--accent-soft);border:1px solid var(--accent);border-radius:10px;
+    padding:16px;display:flex;gap:10px;align-items:flex-start;margin-top:6px;margin-bottom:14px;
+  }
+  .confirm-box input{width:auto;margin-top:3px;flex-shrink:0;}
+  .confirm-box label{font-size:13.5px;color:var(--ink);line-height:1.5;}
+
+  .warn-box{
+    background:#FBF3E7;border:1px solid var(--gold);border-radius:10px;
+    padding:12px 14px;font-size:12.5px;color:#6B4E12;margin-bottom:16px;
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    *{transition:none !important;}
+  }
+</style>
+
+<div id="hcd-root"><div class="wrap" id="hcd-app">Cargando…</div></div>
+
+<script>
+(function(){
+
+if (!window.storage) {
+  window.storage = {
+    set: function (key, value) {
+      try { localStorage.setItem(key, value); return Promise.resolve(); }
+      catch (e) { return Promise.reject(e); }
+    },
+    get: function (key) {
+      try { return Promise.resolve({ value: localStorage.getItem(key) }); }
+      catch (e) { return Promise.reject(e); }
+    }
+  };
+}
+
+// Pipeline de NURA Health (Apps Script) — misma URL /exec que los otros 3 formularios.
+var NH_ENDPOINT = 'PEGAR_URL_EXEC_NURA_HEALTH';
+
+// ===== Candados de NURA Health (ver 05_DOCS/CANDADOS.md) =====================
+// El cuestionario NO envía mientras falte la URL del sistema o quede cualquier
+// texto legal [PENDIENTE]. Sin URL el envío se pierde en silencio (mode:no-cors
+// nunca lee la respuesta); sin texto legal se recogerían datos de salud bajo un
+// aviso que no existe. Las dos fallas caen del lado seguro: no se envía nada.
+function nhMotivoDeBloqueo_(){
+  if (/^PEGAR_/.test(NH_ENDPOINT)) return "este cuestionario todavía no está conectado al sistema de NURA Health.";
+  if (/\[PENDIENTE/.test(JSON.stringify(SECTIONS))) return "falta el texto legal de NURA Health (Aviso de Privacidad y consentimiento). No escribas datos todavía: no se van a poder enviar.";
+  return null;
+}
+document.addEventListener('DOMContentLoaded', function(){
+  var m = nhMotivoDeBloqueo_(); if (!m) return;
+  var d = document.createElement('div');
+  d.setAttribute('role', 'alert');
+  d.style.cssText = 'position:sticky;top:0;z-index:9999;background:#fff4e5;color:#5c3d00;border-bottom:2px solid #b26a00;padding:12px 16px;font:600 14px/1.4 system-ui,sans-serif;text-align:center';
+  d.textContent = 'CUESTIONARIO NO OPERATIVO — ' + m;
+  document.body.insertBefore(d, document.body.firstChild);
+});
+var TIPO_DE_FORMULARIO = 'historia_digital';
+var DRAFT_KEY = 'hcd_borrador_en_curso';
+
+var PROCEDIMIENTOS_OPCIONES = [
+  "Toxina botulínica (Botox)","Ácido hialurónico","Dermapen / microneedling",
+  "Lipoenzimas","Terapia con células madre","Terapia con exosomas","Implante de placenta",
+  "Péptidos (BPC-157/TB-500/otros)","Bloqueo o infiltración articular","Ninguno por ahora"
+];
+
+function tableRow(obj){ return obj; }
+function presetRows(list){ return list.map(function(r){ return Object.assign({}, r); }); }
+
+var SECTIONS = [
+  { id:"identificacion", eyebrow:"Ficha de identificación · NOM-004", title:"Datos del paciente",
+    note:"Contenido mínimo que exige la NOM-004-SSA3-2012 para todo expediente clínico.",
+    fields:[
+      {id:"nombre_completo", type:"text", label:"Nombre completo", required:true},
+      {id:"fecha_nacimiento", type:"date", label:"Fecha de nacimiento", required:true},
+      {id:"sexo", type:"radio", label:"Sexo biológico", required:true, options:["Masculino","Femenino"]},
+      {id:"curp", type:"text", label:"CURP", hint:"Si el paciente la trae a la mano"},
+      {id:"telefono", type:"text", label:"Teléfono / WhatsApp", required:true,
+        hint:"Se usa para identificar al paciente en el expediente — evita duplicados aunque cambie el nombre"},
+      {id:"correo", type:"text", label:"Correo electrónico"},
+      {id:"domicilio", type:"text", label:"Domicilio"},
+      {id:"ocupacion", type:"text", label:"Ocupación"},
+      {id:"fecha_consulta", type:"date", label:"Fecha de esta consulta", required:true, defaultToday:true},
+      {id:"tipo_consulta", type:"radio", label:"Tipo de consulta", required:true, options:["Primera vez","Subsecuente"]}
+    ]},
+
+  { id:"motivo", eyebrow:"Sección 1", title:"Motivo de consulta y padecimiento actual", fields:[
+      {id:"motivo_consulta", type:"textarea", label:"Motivo de consulta", required:true},
+      {id:"padecimiento_actual", type:"textarea", label:"Padecimiento actual",
+        hint:"Inicio, evolución, características, factores agravantes/atenuantes"},
+      {id:"escala_dolor", type:"scale", label:"Escala de dolor actual (EVA)", left:"Sin dolor", right:"Máximo dolor"}
+    ]},
+
+  { id:"antecedentes", eyebrow:"Sección 2", title:"Antecedentes", fields:[
+      {id:"heredofamiliares", type:"checkbox", label:"Antecedentes heredofamiliares directos", hint:"Selecciona todos los que apliquen",
+        options:["DM2 (diabetes)","HTA (hipertensión)","Obesidad","Dislipidemia","Enfermedad cardiovascular","Cáncer","Osteoporosis","Otras","Ninguno"]},
+      {id:"patologicos", type:"textarea", label:"Antecedentes personales patológicos",
+        hint:"Diagnósticos previos/actuales, cirugías, hospitalizaciones"},
+      {id:"no_patologicos", type:"textarea", label:"Antecedentes personales no patológicos",
+        hint:"Tabaco, alcohol, actividad física habitual, exposición ocupacional a riesgo"},
+      {id:"alergias", type:"checkbox", label:"Alergias conocidas",
+        options:["Medicamentos (especificar abajo)","Alimentos (especificar abajo)","Látex","Contraste / yodo","Ninguna conocida"]},
+      {id:"alergenos_detalle", type:"textarea", label:"Especificar alérgenos",
+        showIf:function(a){return (a.alergias||[]).some(function(v){return v.indexOf("especificar")>-1;});}},
+      {id:"medicamentos_tabla", type:"table", label:"Medicamentos actuales",
+        columns:[["nombre","Medicamento / suplemento"],["dosis","Dosis"],["frecuencia","Frecuencia / indicación"]]},
+      {id:"gineco_obstetricos", type:"textarea", label:"Antecedentes gineco-obstétricos",
+        hint:"Ciclo menstrual, anticoncepción, embarazo/lactancia, FUM",
+        showIf:function(a){return a.sexo==="Femenino";}},
+      {id:"lesion_activa", type:"textarea", label:"Lesión musculoesquelética activa o previa relevante"}
+    ]},
+
+  { id:"vitales", eyebrow:"Sección 3", title:"Signos vitales y somatometría", fields:[
+      {id:"ta_sistolica", type:"number", label:"TA sistólica", hint:"mmHg"},
+      {id:"ta_diastolica", type:"number", label:"TA diastólica", hint:"mmHg"},
+      {id:"fc", type:"number", label:"Frecuencia cardiaca", hint:"lpm"},
+      {id:"fr", type:"number", label:"Frecuencia respiratoria", hint:"rpm"},
+      {id:"temp", type:"number", label:"Temperatura", hint:"°C", step:0.1},
+      {id:"spo2", type:"number", label:"Saturación de O2", hint:"%"},
+      {id:"peso", type:"number", label:"Peso", hint:"kg"},
+      {id:"talla", type:"number", label:"Talla", hint:"cm"}
+    ]},
+
+  { id:"exploracion_general", eyebrow:"Sección 4", title:"Exploración física general", fields:[
+      {id:"aspecto_general", type:"textarea", label:"Aspecto general / inspección"},
+      {id:"inspeccion_postural", type:"textarea", label:"Inspección postural"},
+      {id:"marcha", type:"radio", label:"Marcha", options:["Normal","Antálgica","Claudicante","Atáxica","Otra"]},
+      {id:"marcha_notas", type:"textarea", label:"Notas sobre la marcha",
+        showIf:function(a){return a.marcha && a.marcha!=="Normal";}}
+    ]},
+
+  { id:"rom", eyebrow:"Sección 5 · Exploración musculoesquelética", title:"Rango de movimiento articular (ROM)",
+    note:"Usa los botones para insertar de un clic el bloque de la región que vayas a explorar — luego solo llenas los grados/dolor de cada renglón.",
+    fields:[
+      {id:"rom_tabla", type:"table", label:"ROM por articulación",
+        columns:[["region","Movimiento"],["lado","Lado"],["activo","Activo (°)"],["pasivo","Pasivo (°)"],["dolor","Dolor (Sí/No + dónde)"]],
+        presets:[
+          {label:"+ Hombro", rows:presetRows([
+            {region:"Flexión de hombro"},{region:"Extensión de hombro"},{region:"Abducción de hombro"},
+            {region:"Rotación interna de hombro"},{region:"Rotación externa de hombro"}])},
+          {label:"+ Codo/Muñeca", rows:presetRows([
+            {region:"Flexión de codo"},{region:"Extensión de codo"},{region:"Pronación de antebrazo"},
+            {region:"Supinación de antebrazo"},{region:"Flexión de muñeca"},{region:"Extensión de muñeca"}])},
+          {label:"+ Cadera", rows:presetRows([
+            {region:"Flexión de cadera"},{region:"Extensión de cadera"},{region:"Abducción de cadera"},
+            {region:"Rotación interna de cadera"},{region:"Rotación externa de cadera"}])},
+          {label:"+ Rodilla", rows:presetRows([{region:"Flexión de rodilla"},{region:"Extensión de rodilla"}])},
+          {label:"+ Tobillo", rows:presetRows([
+            {region:"Flexión dorsal de tobillo"},{region:"Flexión plantar de tobillo"},
+            {region:"Inversión de tobillo"},{region:"Eversión de tobillo"}])},
+          {label:"+ Columna cervical", rows:presetRows([
+            {region:"Flexión cervical"},{region:"Extensión cervical"},
+            {region:"Rotación cervical"},{region:"Inclinación lateral cervical"}])},
+          {label:"+ Columna lumbar", rows:presetRows([
+            {region:"Flexión lumbar"},{region:"Extensión lumbar"},
+            {region:"Inclinación lateral lumbar"},{region:"Rotación lumbar"}])}
+        ]}
+    ]},
+
+  { id:"daniels", eyebrow:"Sección 6", title:"Escala de Daniels (fuerza muscular 0-5)",
+    note:"0 = sin contracción, 5 = fuerza normal contra resistencia máxima.",
+    fields:[
+      {id:"daniels_tabla", type:"table", label:"Calificación por grupo muscular",
+        columns:[["grupo","Grupo muscular"],["lado","Lado"],["calificacion","Calificación (0-5)"]],
+        presets:[
+          {label:"+ MMSS (miembro superior)", rows:presetRows([
+            {grupo:"Deltoides"},{grupo:"Bíceps braquial"},{grupo:"Tríceps braquial"},
+            {grupo:"Flexores de muñeca"},{grupo:"Extensores de muñeca"},{grupo:"Prensión (agarre)"}])},
+          {label:"+ MMII (miembro inferior)", rows:presetRows([
+            {grupo:"Psoas ilíaco"},{grupo:"Cuádriceps"},{grupo:"Isquiotibiales"},
+            {grupo:"Glúteo medio"},{grupo:"Glúteo mayor"},{grupo:"Tibial anterior"},{grupo:"Gastrocnemio/sóleo"}])}
+        ]}
+    ]},
+
+  { id:"dermatomas", eyebrow:"Sección 7", title:"Dermatomas y miotomas",
+    note:"Relevante ante sospecha de compromiso radicular/neurológico.",
+    fields:[
+      {id:"dermatomas_tabla", type:"table", label:"Nivel neurológico",
+        columns:[["nivel","Nivel"],["sensibilidad","Sensibilidad (N/dism/ausente)"],["miotomo_prueba","Prueba miotómica"],["calificacion","Calificación (0-5)"]],
+        presets:[
+          {label:"+ Cervicales (C5-T1)", rows:presetRows([
+            {nivel:"C5", miotomo_prueba:"Abducción de hombro"},
+            {nivel:"C6", miotomo_prueba:"Flexión de codo / extensión de muñeca"},
+            {nivel:"C7", miotomo_prueba:"Extensión de codo / flexión de muñeca"},
+            {nivel:"C8", miotomo_prueba:"Flexión de dedos"},
+            {nivel:"T1", miotomo_prueba:"Abducción de dedos"}])},
+          {label:"+ Lumbosacros (L2-S2)", rows:presetRows([
+            {nivel:"L2", miotomo_prueba:"Flexión de cadera"},
+            {nivel:"L3", miotomo_prueba:"Extensión de rodilla"},
+            {nivel:"L4", miotomo_prueba:"Dorsiflexión de tobillo"},
+            {nivel:"L5", miotomo_prueba:"Extensión de hallux"},
+            {nivel:"S1", miotomo_prueba:"Flexión plantar / eversión"},
+            {nivel:"S2", miotomo_prueba:"Flexión de rodilla"}])}
+        ]}
+    ]},
+
+  { id:"ortopedicas", eyebrow:"Sección 8", title:"Pruebas ortopédicas especiales", fields:[
+      {id:"ortopedicas_tabla", type:"table", label:"Prueba / resultado",
+        columns:[["prueba","Prueba"],["region","Región"],["lado","Lado"],["resultado","Resultado (+/-)"],["notas","Notas"]],
+        presets:[
+          {label:"+ Hombro", rows:presetRows([
+            {prueba:"Neer", region:"Hombro"},{prueba:"Hawkins-Kennedy", region:"Hombro"},
+            {prueba:"Jobe (supraespinoso)", region:"Hombro"},{prueba:"Speed", region:"Hombro"},{prueba:"Drop Arm", region:"Hombro"}])},
+          {label:"+ Rodilla", rows:presetRows([
+            {prueba:"Lachman", region:"Rodilla"},{prueba:"Cajón anterior", region:"Rodilla"},
+            {prueba:"Cajón posterior", region:"Rodilla"},{prueba:"McMurray", region:"Rodilla"},
+            {prueba:"Estrés en valgo", region:"Rodilla"},{prueba:"Estrés en varo", region:"Rodilla"}])},
+          {label:"+ Columna/Lumbar", rows:presetRows([
+            {prueba:"Lasègue (SLR)", region:"Columna lumbar"},{prueba:"Bragard", region:"Columna lumbar"},
+            {prueba:"Spurling", region:"Columna cervical"},{prueba:"Slump test", region:"Columna lumbar"}])},
+          {label:"+ Cadera", rows:presetRows([
+            {prueba:"FABER (Patrick)", region:"Cadera"},{prueba:"Trendelenburg", region:"Cadera"},{prueba:"Thomas test", region:"Cadera"}])},
+          {label:"+ Tobillo", rows:presetRows([
+            {prueba:"Cajón anterior de tobillo", region:"Tobillo"},{prueba:"Talar tilt", region:"Tobillo"},{prueba:"Squeeze test", region:"Tobillo"}])}
+        ]}
+    ]},
+
+  { id:"perfil_entrenamiento", eyebrow:"Sección 9", title:"Perfil de entrenamiento y deporte", fields:[
+      {id:"nivel_experiencia", type:"list", label:"Nivel de experiencia en planes de entrenamiento estructurados", required:true,
+        options:["Principiante","Intermedio","Avanzado","Atleta de alto rendimiento"]},
+      {id:"disciplina_actual", type:"text", label:"Deporte o disciplina que practica",
+        hint:"Sé específico: no solo 'fútbol americano', sino la posición; no solo 'levantamiento', sino powerlifting/halterofilia/fisicoculturismo, etc."},
+      {id:"disciplina_categoria_fase", type:"text", label:"Categoría / posición / fase de temporada (si es atleta)",
+        hint:"Ej.: posición de juego; categoría de competencia; fase de temporada",
+        showIf:function(a){return a.nivel_experiencia==="Atleta de alto rendimiento" || a.nivel_experiencia==="Avanzado";}},
+      {id:"antecedentes_deportivos", type:"textarea", label:"Antecedentes deportivos",
+        hint:"Deportes practicados, años, nivel alcanzado (escolar/amateur/nacional/profesional), etapa activa o retirado"},
+      {id:"dias_entrenamiento", type:"list", label:"Días por semana disponibles para entrenar",
+        options:["2","3","4","5","6","Doble sesión / variable"]},
+      {id:"acceso_entreno", type:"list", label:"Equipamiento disponible",
+        options:["Gimnasio completo (todo el equipo)","Gimnasio básico","Casa con algo de equipo","Sin equipo"]},
+      {id:"entreno_notas", type:"textarea", label:"Notas de entrenamiento actual",
+        hint:"Qué entrena hoy, frecuencia, lesiones que limiten movimientos, preferencias"}
+    ]},
+
+  { id:"laboratorio", eyebrow:"Sección 10", title:"Estudios de laboratorio / imagenología disponibles", fields:[
+      {id:"labs_tipo", type:"checkbox", label:"Estudios disponibles en esta consulta", hint:"Marca todos los que tengas a la vista",
+        options:["BHC (biometría hemática)","Química sanguínea (QS6)","Función hepática (TGO/TGP/GGT)","Perfil de lípidos","Glucosa / insulina / HOMA-IR","HbA1c","TSH / T3 libre / T4","Testosterona total y libre","Estradiol / progesterona","Cortisol matutino","Vitamina D3 (25-OH)","EGO","Rayos X / resonancia / ultrasonido","Otros","Ninguno disponible hoy"]},
+      {id:"labs_notas", type:"textarea", label:"Notas sobre laboratorio/imagenología", hint:"Fecha, hallazgos relevantes, o qué falta solicitar"}
+    ]},
+
+  { id:"diagnostico_plan", eyebrow:"Sección 11", title:"Impresión diagnóstica y procedimientos planeados", fields:[
+      {id:"diagnosticos_medicos", type:"textarea", label:"Impresión diagnóstica", required:true},
+      {id:"procedimientos_planeados", type:"checkbox", label:"Procedimientos planeados en esta visita o próximas",
+        hint:"Si NURA Health ya tiene el texto de consentimiento validado para el procedimiento, se genera el documento para imprimir y firmar. Si no lo tiene, no se genera nada y el correo al médico lo avisa.",
+        options:PROCEDIMIENTOS_OPCIONES}
+    ]},
+
+  { id:"estrategia_plan", eyebrow:"Sección 12", title:"Estrategia y directrices del plan",
+    note:"Todo lo que definas aquí el sistema lo toma como orden confirmada y NO lo vuelve a marcar como pendiente. Lo que dejes vacío, el sistema lo calcula con su criterio. Llena solo lo que quieras dictar tú.", fields:[
+      {id:"objetivo_plan", type:"list", label:"Objetivo primario del plan",
+        options:["Pérdida de grasa","Hipertrofia","Recomposición corporal","Rendimiento deportivo","Longevidad / salud metabólica","Rehabilitación funcional","Competencia (fisicoculturismo u otro)"]},
+      {id:"objetivo_plazo", type:"text", label:"Plazo / fecha o evento objetivo", hint:"Ej.: fecha de una competencia o evento; recomposición a N meses"},
+      {id:"meta_composicion", type:"text", label:"Peso o composición objetivo", hint:"Ej.: rango de peso objetivo en kg; % de grasa objetivo"},
+      {id:"estrategia_calorica", type:"list", label:"Estrategia calórica",
+        options:["Déficit","Superávit","Mantenimiento","Recomposición","Que el sistema lo defina"]},
+      {id:"kcal_entreno", type:"number", label:"Kcal totales — día de entrenamiento", hint:"Dejar vacío = el sistema estima con Harris-Benedict ajustado"},
+      {id:"kcal_descanso", type:"number", label:"Kcal totales — día de descanso", hint:"Dejar vacío = el sistema estima"},
+      {id:"proteina_objetivo", type:"text", label:"Proteína objetivo", hint:"g/kg de peso objetivo o g/día fijo. El gramaje manda sobre los %"},
+      {id:"regla_carbo_grasa", type:"text", label:"Regla de carbohidrato/grasa", hint:"Ej.: descanso −30% carbo respecto a entreno, resto en grasa"},
+      {id:"comidas_dia", type:"list", label:"Número de comidas al día", options:["3","4","5","6"]},
+      {id:"alimentos_evita", type:"text", label:"Alimentos que NO consume / restricciones", hint:"Intolerancias, preferencias, alergias alimentarias"},
+      {id:"enfoque_entrenamiento", type:"list", label:"Enfoque de entrenamiento",
+        options:["Hipertrofia por aislamiento (máquinas y poleas)","Fuerza","Mixto hipertrofia + fuerza","Deportivo específico","Rehabilitación","Que el sistema lo defina"]},
+      {id:"split_preferido", type:"textarea", label:"Split que quiero (días + grupos musculares)", hint:"Dejar vacío = el sistema lo arma según nivel y objetivo. Ej.: par/impar, o Lun push / Mar pierna...", rows:3},
+      {id:"ejercicios_evitar", type:"textarea", label:"Ejercicios o patrones a EVITAR", hint:"Ej.: sin overhead, sin barra libre pesada", rows:2},
+      {id:"lesion_rom_seguro", type:"text", label:"Lesión/limitación activa + ROM o carga segura", hint:"Ej.: rodilla D flexión segura hasta 60°, sin impacto"},
+      {id:"cardio_directriz", type:"textarea", label:"Directriz de cardio", hint:"Dejar vacío = el sistema lo arma por zonas de FCmáx. Ej.: modalidad, días, zona de FC y duración", rows:2},
+      {id:"suplementos_indicar", type:"textarea", label:"Suplementos a INDICAR", hint:"Con prioridad si quieres: obligatorio / preferencial / opcional. Dejar vacío = el sistema propone según perfil", rows:2},
+      {id:"suplementos_mantener_quitar", type:"textarea", label:"Suplementos a mantener como ya los toma / a quitar", hint:"Y el motivo si aplica", rows:2},
+      {id:"interaccion_evaluada", type:"textarea", label:"Interacción o alerta que YA evalué (no dejar pendiente)", hint:"Ej.: interacción medicamento-suplemento ya valorada", rows:2},
+      {id:"hepatoproteccion_dosis", type:"text", label:"Hepatoprotección / profilaxis lipídica — dosis que fijo", hint:"Dejar vacío = dosis base del sistema si hay farmacología activa"},
+      {id:"condicion_particular_manejo", type:"textarea", label:"Condición médica particular + manejo que indico", hint:"Ej.: SOP / hipotiroidismo / HTA / DM2 / dislipidemia + protocolo", rows:2},
+      {id:"consentimiento_estado", type:"text", label:"Estado del consentimiento de procedimientos", hint:"Ej.: firmado en físico (fecha); o pendiente de firma",
+        showIf:function(a){return (a.procedimientos_planeados||[]).some(function(v){return v!=="Ninguno por ahora";});}},
+      {id:"labs_estado", type:"text", label:"Estado de laboratorios", hint:"Ej.: ya solicitados (fecha), revisar en próxima visita"},
+      {id:"seguimiento_semanas", type:"list", label:"Próxima revisión sugerida", options:["2 semanas","3 semanas","4 semanas","6 semanas","8 semanas","12 semanas"]},
+      {id:"indicaciones_particulares", type:"textarea", label:"Otras indicaciones particulares (texto libre)",
+        hint:"Solo para algo que no haya quedado cubierto por los campos de arriba", rows:3}
+    ]},
+
+  { id:"consentimiento", eyebrow:"Último paso", title:"Aviso de privacidad y consentimiento",
+    note:"[PENDIENTE: resumen del Aviso de Privacidad de NURA Health. Lo redacta y valida el abogado de NURA. Debe declarar el tratamiento de datos de salud para elaborar el plan, el uso de un proveedor de inteligencia artificial como encargado que procesa esos datos, y el consentimiento expreso por separado. Mientras este texto no exista, este cuestionario no envía.]",
+    fields:[
+      {id:"medico_responsable", type:"text", label:"Nombre de quien levanta esta Historia Clínica", required:true},
+      {id:"aviso_privacidad_aceptado", type:"confirm", required:true,
+        label:"[PENDIENTE: texto de aceptación del Aviso de Privacidad de NURA Health — lo valida el abogado de NURA]"},
+      {id:"consentimiento_ia", type:"confirm", required:true, label:"[PENDIENTE: confirmación de que el paciente otorgó su consentimiento EXPRESO para el procesamiento de sus datos de salud con apoyo de un sistema de inteligencia artificial — lo valida el abogado de NURA]"},
+      {id:"consentimiento_procedimientos_confirm", type:"confirm",
+        label:"[PENDIENTE: texto de confirmación sobre información de riesgos, beneficios y alternativas de los procedimientos marcados — lo valida el abogado de NURA]",
+        showIf:function(a){return (a.procedimientos_planeados||[]).some(function(v){return v!=="Ninguno por ahora";});}},
+      {id:"firma_confirma", type:"confirm", required:true,
+        label:"Confirmo que esta Historia Clínica fue obtenida mediante interrogatorio directo y exploración física del paciente, y que la información es verídica y completa."}
+    ]}
+];
+
+function fieldById(id){
+  for (var s=0;s<SECTIONS.length;s++){
+    for (var f=0;f<SECTIONS[s].fields.length;f++){
+      if (SECTIONS[s].fields[f].id===id) return SECTIONS[s].fields[f];
+    }
+  }
+  return null;
+}
+
+var state = { view:"loading", answers:{}, step:0, saveMsg:"", hayBorrador:false };
+
+function getVisibleSections(){
+  return SECTIONS.filter(function(s){ return !s.visibleIf || s.visibleIf(state.answers); });
+}
+
+function esc(str){
+  return String(str==null?"":str).replace(/[&<>"]/g, function(c){
+    return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];
+  });
+}
+
+function debounce(fn, ms){
+  var t; return function(){ var args=arguments; clearTimeout(t); t=setTimeout(function(){fn.apply(null,args);}, ms); };
+}
+var doAutosave = debounce(function(){ saveDraft(); }, 700);
+
+function saveDraft(){
+  var payload = { answers: state.answers, updatedAt: new Date().toISOString() };
+  window.storage.set(DRAFT_KEY, JSON.stringify(payload)).then(function(){
+    state.saveMsg = "Guardado ✓";
+    renderSaveMsg();
+    setTimeout(function(){ state.saveMsg=""; renderSaveMsg(); }, 1500);
+  }).catch(function(){
+    state.saveMsg = "No se pudo guardar. Revisa tu conexión.";
+    renderSaveMsg();
+  });
+}
+
+function finalizeSubmission(){
+  var nhBloqueo = nhMotivoDeBloqueo_();
+  if (nhBloqueo) { var nhErr = new Error(nhBloqueo); nhErr.nhBloqueo = true; return Promise.reject(nhErr); }
+  // Se manda igual que los otros 3 formularios (Regla 16: el paciente nunca
+  // ve el resultado, así que no necesitamos leer la respuesta del servidor).
+  var payload = Object.assign({}, state.answers, { formType: TIPO_DE_FORMULARIO });
+  return fetch(NH_ENDPOINT, {
+    method: "POST",
+    mode: "no-cors",
+    headers: { "Content-Type": "text/plain;charset=utf-8" },
+    body: JSON.stringify(payload)
+  });
+}
+
+function applyDefaults(){
+  var todayField = fieldById("fecha_consulta");
+  if (todayField && !state.answers.fecha_consulta){
+    state.answers.fecha_consulta = new Date().toISOString().slice(0,10);
+  }
+}
+
+function init(){
+  window.storage.get(DRAFT_KEY).then(function(res){
+    state.hayBorrador = !!(res && res.value);
+    state.view = "landing";
+    render();
+  }).catch(function(){
+    state.view = "landing";
+    render();
+  });
+}
+
+function empezarNueva(){
+  state.answers = {};
+  state.step = 0;
+  applyDefaults();
+  state.view = "form";
+  render();
+}
+
+function reanudarBorrador(){
+  window.storage.get(DRAFT_KEY).then(function(res){
+    if (res && res.value){
+      try { state.answers = JSON.parse(res.value).answers || {}; } catch(e){ state.answers = {}; }
+    }
+    applyDefaults();
+    state.step = 0;
+    state.view = "form";
+    render();
+  });
+}
+
+function sectionErrors(section){
+  var errs = [];
+  section.fields.forEach(function(f){
+    if (f.showIf && !f.showIf(state.answers)) return;
+    if (!f.required) return;
+    var v = state.answers[f.id];
+    if (f.type==="confirm"){ if(!v) errs.push(f.id); return; }
+    if (v===undefined || v===null || v===""){ errs.push(f.id); }
+  });
+  return errs;
+}
+
+function renderField(f){
+  if (f.showIf && !f.showIf(state.answers)) return "";
+  var val = state.answers[f.id];
+  var reqMark = f.required ? ' <span class="required-mark">*</span>' : "";
+  var hint = f.hint ? '<div class="hint">'+esc(f.hint)+'</div>' : "";
+
+  if (f.type==="text" || f.type==="date"){
+    return '<div class="field">'+
+      '<label class="q">'+esc(f.label)+reqMark+'</label>'+hint+
+      '<input type="'+f.type+'" value="'+esc(val||"")+'" oninput="HCD.onTextInput(\''+f.id+'\', this.value)">'+
+      '</div>';
+  }
+  if (f.type==="number"){
+    return '<div class="field">'+
+      '<label class="q">'+esc(f.label)+reqMark+'</label>'+hint+
+      '<input type="number" step="'+(f.step||1)+'" value="'+esc(val||"")+'" oninput="HCD.onTextInput(\''+f.id+'\', this.value)">'+
+      '</div>';
+  }
+  if (f.type==="textarea"){
+    return '<div class="field">'+
+      '<label class="q">'+esc(f.label)+reqMark+'</label>'+hint+
+      '<textarea oninput="HCD.onTextInput(\''+f.id+'\', this.value)">'+esc(val||"")+'</textarea>'+
+      '</div>';
+  }
+  // "list" se dibuja igual que "radio": selección única con chips. Sin este caso
+  // los campos type:"list" no se renderizaban y, si eran required, bloqueaban el
+  // avance de sección pidiendo un campo que nunca llegaba a verse.
+  if (f.type==="radio" || f.type==="list"){
+    var chips = f.options.map(function(o){
+      var sel = val===o ? " selected":"";
+      return '<div class="chip'+sel+'" onclick="HCD.onChoice(\''+f.id+'\',\''+esc(o).replace(/'/g,"\\'")+'\',false)">'+esc(o)+'</div>';
+    }).join("");
+    return '<div class="field"><label class="q">'+esc(f.label)+reqMark+'</label>'+hint+'<div class="chip-grid">'+chips+'</div></div>';
+  }
+  if (f.type==="checkbox"){
+    var arr = val || [];
+    var chips2 = f.options.map(function(o){
+      var sel = arr.indexOf(o)>-1 ? " selected":"";
+      return '<div class="chip'+sel+'" onclick="HCD.onChoice(\''+f.id+'\',\''+esc(o).replace(/'/g,"\\'")+'\',true)">'+esc(o)+'</div>';
+    }).join("");
+    return '<div class="field"><label class="q">'+esc(f.label)+reqMark+'</label>'+hint+'<div class="chip-grid">'+chips2+'</div></div>';
+  }
+  if (f.type==="scale"){
+    var n = val || null;
+    var btns = "";
+    for (var i=0;i<=10;i++){
+      btns += '<div class="chip'+(n==i?" selected":"")+'" style="flex:1;text-align:center;" onclick="HCD.onChoice(\''+f.id+'\','+i+',false)">'+i+'</div>';
+    }
+    return '<div class="field"><label class="q">'+esc(f.label)+reqMark+'</label>'+
+      '<div class="chip-grid" style="flex-wrap:nowrap;">'+btns+'</div>'+
+      '<div class="hint" style="display:flex;justify-content:space-between;"><span>'+esc(f.left)+'</span><span>'+esc(f.right)+'</span></div></div>';
+  }
+  if (f.type==="table"){
+    var rows = val || [];
+    var head = '<tr>'+f.columns.map(function(c){return '<th>'+esc(c[1])+'</th>';}).join("")+'<th></th></tr>';
+    var body = rows.map(function(row, idx){
+      return '<tr>'+f.columns.map(function(c){
+        return '<td><input type="text" value="'+esc(row[c[0]]||"")+'" oninput="HCD.onTableInput(\''+f.id+'\','+idx+',\''+c[0]+'\',this.value)"></td>';
+      }).join("")+'<td><button type="button" class="row-remove" onclick="HCD.onTableRemove(\''+f.id+'\','+idx+')">✕</button></td></tr>';
+    }).join("");
+    var presetBtns = "";
+    if (f.presets && f.presets.length){
+      presetBtns = '<div class="preset-row">'+f.presets.map(function(p, pidx){
+        return '<button type="button" class="preset-btn" onclick="HCD.onTablePreset(\''+f.id+'\','+pidx+')">'+esc(p.label)+'</button>';
+      }).join("")+'</div>';
+    }
+    return '<div class="field"><label class="q">'+esc(f.label)+reqMark+'</label>'+hint+
+      presetBtns+
+      '<table class="exam-table"><thead>'+head+'</thead><tbody>'+body+'</tbody></table>'+
+      '<button type="button" class="add-row-btn" onclick="HCD.onTableAdd(\''+f.id+'\')">+ agregar renglón</button></div>';
+  }
+  if (f.type==="confirm"){
+    var checked = val ? "checked" : "";
+    return '<div class="confirm-box"><input type="checkbox" '+checked+' onchange="HCD.onConfirm(\''+f.id+'\',this.checked)">'+
+      '<label>'+esc(f.label)+'</label></div>';
+  }
+  return "";
+}
+
+function renderOrbit(){
+  var secs = getVisibleSections();
+  var nodes = "";
+  secs.forEach(function(s, i){
+    var cls = i < state.step ? "done" : (i===state.step ? "current" : "");
+    nodes += '<div class="orbit-node '+cls+'"></div>';
+    if (i < secs.length-1){
+      nodes += '<div class="orbit-line '+(i<state.step?"done":"")+'"></div>';
+    }
+  });
+  return '<div class="orbit-wrap"><div class="orbit-track">'+nodes+'</div>'+
+    '<div class="orbit-caption">PASO '+(state.step+1)+' DE '+secs.length+'</div></div>';
+}
+
+function renderSaveMsg(){
+  var el = document.getElementById("hcd-savemsg");
+  if (el) el.textContent = state.saveMsg;
+}
+
+function renderLanding(){
+  return ''+
+    '<div class="brand"><div class="brand-name">NURA HEALTH</div>'+
+    '<div class="brand-tag">Historia Clínica Digital · Uso interno</div></div>'+
+    '<div class="card">'+
+    '<p class="eyebrow">Consulta presencial</p>'+
+    '<h2 class="step-title">Historia Clínica Digital</h2>'+
+    '<p class="step-note">Se llena directo en consulta y alimenta el pipeline: Plan Integral con Claude, expediente del paciente, y consentimientos informados de los procedimientos que marques.</p>'+
+    '<div class="warn-box">Este formulario no sustituye tu criterio clínico ni ningún consentimiento informado firmado en papel — es la captura estructurada de lo que ya evalúas en consulta.</div>'+
+    '<div class="landing-actions">'+
+    '<button class="btn btn-primary" onclick="HCD.empezarNueva()">Nueva Historia Clínica</button>'+
+    (state.hayBorrador ? '<button class="btn btn-ghost" onclick="HCD.reanudarBorrador()">Reanudar borrador guardado</button>' : '')+
+    '</div>'+
+    '</div>';
+}
+
+function renderForm(){
+  var secs = getVisibleSections();
+  if (state.step >= secs.length) state.step = secs.length-1;
+  var section = secs[state.step];
+  var isLast = state.step === secs.length-1;
+  var isFirst = state.step === 0;
+
+  var fieldsHtml = section.fields.map(renderField).join("");
+
+  var out = "";
+  out += '<div class="brand"><div class="brand-name">NURA HEALTH</div>'+
+    '<div class="brand-tag">Historia Clínica Digital · Uso interno</div></div>';
+  out += renderOrbit();
+  out += '<div class="card">';
+  out += '<p class="eyebrow">'+esc(section.eyebrow)+'</p>';
+  out += '<h2 class="step-title">'+esc(section.title)+'</h2>';
+  if (section.note) out += '<p class="step-note">'+esc(section.note)+'</p>';
+  out += fieldsHtml;
+  out += '<div class="nav-row">';
+  out += isFirst ? '<button class="btn btn-ghost" onclick="HCD.backToLanding()">← Inicio</button>' : '<button class="btn btn-ghost" onclick="HCD.prevStep()">← Atrás</button>';
+  out += isLast
+    ? '<button class="btn btn-primary" onclick="HCD.submitForm()">Enviar Historia Clínica</button>'
+    : '<button class="btn btn-primary" onclick="HCD.nextStep()">Siguiente →</button>';
+  out += '</div>';
+  out += '<div class="autosave" id="hcd-savemsg">'+esc(state.saveMsg)+'</div>';
+  out += '</div>';
+  return out;
+}
+
+function renderDone(){
+  return '<div class="brand"><div class="brand-name">NURA HEALTH</div></div>'+
+    '<div class="card">'+
+    '<p class="eyebrow">Listo</p>'+
+    '<h2 class="step-title">Historia Clínica enviada</h2>'+
+    '<p class="step-note">Se está generando el Plan Integral, el expediente del paciente y, si existe texto validado, los consentimientos informados de los procedimientos marcados. Revisa tu correo o el Sheet en unos momentos.</p>'+
+    '<div class="landing-actions"><button class="btn btn-primary" onclick="HCD.empezarNueva()">Levantar otra Historia Clínica</button></div>'+
+    '</div>';
+}
+
+function render(){
+  var app = document.getElementById("hcd-app");
+  if (state.view==="loading") app.innerHTML = "Cargando…";
+  else if (state.view==="landing") app.innerHTML = renderLanding();
+  else if (state.view==="form") app.innerHTML = renderForm();
+  else if (state.view==="done") app.innerHTML = renderDone();
+}
+
+var HCD = {
+  empezarNueva: empezarNueva,
+  reanudarBorrador: reanudarBorrador,
+  backToLanding: function(){ state.view="landing"; render(); },
+  onTextInput: function(id, value){
+    state.answers[id] = value;
+    doAutosave();
+  },
+  onChoice: function(id, value, multi){
+    if (multi){
+      var arr = (state.answers[id]||[]).slice();
+      var idx = arr.indexOf(value);
+      if (idx>-1) arr.splice(idx,1); else arr.push(value);
+      state.answers[id] = arr;
+    } else {
+      state.answers[id] = (typeof value==="string") ? value : Number(value);
+    }
+    doAutosave();
+    render();
+  },
+  onConfirm: function(id, checked){
+    state.answers[id] = checked;
+    doAutosave();
+  },
+  onTableAdd: function(id){
+    var arr = (state.answers[id]||[]).slice();
+    arr.push({});
+    state.answers[id]=arr;
+    render();
+  },
+  onTablePreset: function(id, presetIdx){
+    var f = fieldById(id);
+    var preset = f.presets[presetIdx];
+    var arr = (state.answers[id]||[]).slice();
+    state.answers[id] = arr.concat(preset.rows.map(function(r){ return Object.assign({}, r); }));
+    doAutosave();
+    render();
+  },
+  onTableRemove: function(id, idx){
+    var arr = (state.answers[id]||[]).slice();
+    arr.splice(idx,1);
+    state.answers[id]=arr;
+    doAutosave();
+    render();
+  },
+  onTableInput: function(id, idx, col, value){
+    var arr = (state.answers[id]||[]).slice();
+    if (!arr[idx]) arr[idx]={};
+    arr[idx][col]=value;
+    state.answers[id]=arr;
+    doAutosave();
+  },
+  nextStep: function(){
+    var secs = getVisibleSections();
+    var errs = sectionErrors(secs[state.step]);
+    if (errs.length){
+      alert("Por favor completa los campos obligatorios antes de continuar.");
+      return;
+    }
+    if (state.step < secs.length-1){ state.step++; window.scrollTo(0,0); render(); }
+  },
+  prevStep: function(){
+    if (state.step>0){ state.step--; window.scrollTo(0,0); render(); }
+  },
+  submitForm: function(){
+    // Guarda antiduplicado: un doble clic en "Enviar" creaba dos envíos reales
+    // (y dos expedientes distintos del mismo paciente).
+    if (state.enviando) return;
+    var secs = getVisibleSections();
+    var errs = sectionErrors(secs[state.step]);
+    if (errs.length){
+      alert("Por favor completa los campos obligatorios antes de enviar.");
+      return;
+    }
+    state.enviando = true;
+    var btns = document.querySelectorAll('.btn-primary');
+    for (var i=0;i<btns.length;i++){ btns[i].disabled = true; btns[i].textContent = "Enviando..."; }
+    finalizeSubmission().then(function(){
+      state.enviando = false;
+      window.storage.set(DRAFT_KEY, "");
+      state.view = "done";
+      render();
+    }).catch(function(err){
+      state.enviando = false;
+      render();
+      // Si el candado de NURA Health detuvo el envío, se dice ESO: culpar a la
+      // conexión mandaría a reintentar algo que nunca va a salir.
+      alert(err && err.nhBloqueo ? err.message : "No se pudo enviar. Revisa tu conexión e intenta de nuevo.");
+    });
+  }
+};
+window.HCD = HCD;
+
+init();
+
+})();
+</script>

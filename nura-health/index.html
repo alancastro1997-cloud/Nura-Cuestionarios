@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<!-- NURA Health - Cuestionarios | Copyright (C) 2026 NURA Cells | SPDX-License-Identifier: AGPL-3.0-or-later -->
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>NURA Health — Formularios</title>
+<style>
+  :root{
+    --accent:#404040;
+    --accent-dark:#262626;
+    --bg:#f7f5f3;
+    --card:#ffffff;
+    --text:#2a2a2a;
+    --muted:#6b6b6b;
+    --border:#e6e1dd;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    background:var(--bg);
+    color:var(--text);
+    padding:32px 16px 64px;
+  }
+  .wrap{max-width:640px;margin:0 auto;}
+  header{text-align:center;margin-bottom:36px;}
+  header .brand{
+    font-size:13px;
+    letter-spacing:2px;
+    text-transform:uppercase;
+    color:var(--accent);
+    font-weight:700;
+    margin-bottom:6px;
+  }
+  header h1{
+    font-size:26px;
+    margin:0 0 8px;
+    color:var(--text);
+  }
+  header p{
+    color:var(--muted);
+    font-size:14px;
+    margin:0;
+  }
+  .group-title{
+    font-size:12px;
+    letter-spacing:1.5px;
+    text-transform:uppercase;
+    color:var(--muted);
+    margin:32px 0 12px;
+    padding-left:4px;
+  }
+  .group-title:first-of-type{margin-top:0;}
+  .card{
+    display:block;
+    background:var(--card);
+    border:1px solid var(--border);
+    border-radius:12px;
+    padding:18px 20px;
+    margin-bottom:12px;
+    text-decoration:none;
+    color:var(--text);
+    box-shadow:0 1px 2px rgba(0,0,0,0.03);
+    transition:border-color .15s ease, transform .15s ease, box-shadow .15s ease;
+  }
+  .card:hover{
+    border-color:var(--accent);
+    transform:translateY(-1px);
+    box-shadow:0 4px 12px rgba(64,64,64,0.08);
+  }
+  .card-top{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+  }
+  .card-title{
+    font-size:16px;
+    font-weight:600;
+    color:var(--accent-dark);
+  }
+  .arrow{
+    color:var(--accent);
+    font-size:18px;
+  }
+  .card-desc{
+    font-size:13px;
+    color:var(--muted);
+    margin-top:4px;
+    line-height:1.4;
+  }
+  .badge{
+    display:inline-block;
+    font-size:10px;
+    letter-spacing:0.5px;
+    text-transform:uppercase;
+    font-weight:700;
+    padding:2px 8px;
+    border-radius:20px;
+    margin-top:8px;
+  }
+  .badge-paciente{
+    background:#eef6ee;
+    color:#2e7d32;
+  }
+  .badge-interno{
+    background:#F4F4F5;
+    color:var(--accent-dark);
+  }
+  footer{
+    text-align:center;
+    margin-top:40px;
+    font-size:12px;
+    color:var(--muted);
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="brand">NURA Health</div>
+    <h1>Formularios digitales</h1>
+    <p>Acceso rápido a los 5 formularios</p>
+  </header>
+
+  <div class="group-title">Para compartir con el paciente</div>
+
+  <a class="card" href="nurah_cuestionario_inicial.html">
+    <div class="card-top">
+      <span class="card-title">Cuestionario inicial</span>
+      <span class="arrow">→</span>
+    </div>
+    <div class="card-desc">Paciente nuevo, consulta en línea. Intake completo.</div>
+    <span class="badge badge-paciente">Paciente</span>
+  </a>
+
+  <a class="card" href="nurah_seguimiento_enlinea.html">
+    <div class="card-top">
+      <span class="card-title">Seguimiento en línea</span>
+      <span class="arrow">→</span>
+    </div>
+    <div class="card-desc">Paciente ya conocido, ajuste de plan a distancia.</div>
+    <span class="badge badge-paciente">Paciente</span>
+  </a>
+
+  <a class="card" href="mini_antes_de_tu_cita.html">
+    <div class="card-top">
+      <span class="card-title">Antes de tu cita</span>
+      <span class="arrow">→</span>
+    </div>
+    <div class="card-desc">Mini cuestionario de preconsulta, previo a la cita presencial.</div>
+    <span class="badge badge-paciente">Paciente</span>
+  </a>
+
+  <div class="group-title">Uso interno — consultorio</div>
+
+  <a class="card" href="historia_clinica_digital.html">
+    <div class="card-top">
+      <span class="card-title">Historia clínica digital</span>
+      <span class="arrow">→</span>
+    </div>
+    <div class="card-desc">Intake presencial inicial completo (NOM-004): exploración física, ROM, Daniels, dermatomas, pruebas ortopédicas y perfil de entrenamiento y deporte.</div>
+    <span class="badge badge-interno">Interno</span>
+  </a>
+
+  <a class="card" href="seguimiento_presencial_digital.html">
+    <div class="card-top">
+      <span class="card-title">Seguimiento presencial</span>
+      <span class="arrow">→</span>
+    </div>
+    <div class="card-desc">Ajuste de plan en consulta presencial. Busca automáticamente el plan anterior del paciente.</div>
+    <span class="badge badge-interno">Interno</span>
+  </a>
+
+  <footer>
+    NURA Health · [PENDIENTE: texto sobre el tratamiento de datos, validado por el abogado]
+  </footer>
+
+</div>
+</body>
+</html>

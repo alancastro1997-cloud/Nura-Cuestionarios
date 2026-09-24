@@ -56,6 +56,20 @@ configure, funcionan en modo demo e imprimen el envío en la consola del navegad
 > **El nombre del repositorio distingue mayúsculas en la URL.** Es `Nura-Cuestionarios`, con las dos
 > iniciales en mayúscula: `nura-cuestionarios` devuelve 404.
 
+## `nura-health/` — cuestionarios de NURA Health
+
+Los 5 cuestionarios del sistema de planes de **NURA Health** (nutrición y entrenamiento) y su índice
+interno. **No se editan aquí**: la fuente es `NURA HEALTH/03_CUESTIONARIOS/` y se copian con
+`node 02_ARNES/publicar_cuestionarios.js`, que se niega a copiar si las pruebas no están en verde.
+
+- Envían al `/exec` del pipeline de NURA Health (`NH_ENDPOINT`), **no** al CRM ni al Apps Script de
+  seguimiento.
+- Mientras quede un `[PENDIENTE]` legal o la URL de marcador, **no envían** y muestran la franja
+  «CUESTIONARIO NO OPERATIVO». Está hecho a propósito (`NURA HEALTH/05_DOCS/CANDADOS.md`).
+- No se enlazan desde el `index.html` de la raíz.
+
+URL: `https://alancastro1997-cloud.github.io/Nura-Cuestionarios/nura-health/<archivo>.html` (distingue mayúsculas).
+
 ## Privacidad
 
 Hay que distinguir dos cosas que antes este archivo decía fundidas en una.
