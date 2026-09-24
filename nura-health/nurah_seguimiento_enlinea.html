@@ -153,7 +153,7 @@ var NH_ENDPOINT = 'PEGAR_URL_EXEC_NURA_HEALTH';
 // aviso que no existe. Las dos fallas caen del lado seguro: no se envía nada.
 function nhMotivoDeBloqueo_(){
   if (/^PEGAR_/.test(NH_ENDPOINT)) return "este cuestionario todavía no está conectado al sistema de NURA Health.";
-  if (/\[PENDIENTE/.test(JSON.stringify(FIELDS))) return "falta el texto legal de NURA Health (Aviso de Privacidad y consentimiento). No escribas datos todavía: no se van a poder enviar.";
+  if (/\[(PENDIENTE|COMPLETAR|VALIDAR)/.test(JSON.stringify(FIELDS))) return "falta el texto legal de NURA Health (Aviso de Privacidad y consentimiento). No escribas datos todavía: no se van a poder enviar.";
   return null;
 }
 document.addEventListener('DOMContentLoaded', function(){
