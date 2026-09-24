@@ -345,7 +345,7 @@ var SECTIONS = [
       {id:"aviso_privacidad_aceptado", type:"confirm", required:true,
         label:"[PENDIENTE: texto de aceptación del Aviso de Privacidad de NURA Health — lo valida el abogado de NURA]"},
       {id:"consentimiento_ia", type:"confirm", required:true, label:"[PENDIENTE: confirmación de que el paciente otorgó su consentimiento EXPRESO para el procesamiento de sus datos de salud con apoyo de un sistema de inteligencia artificial — lo valida el abogado de NURA]"},
-      {id:"consentimiento_procedimientos_confirm", type:"confirm",
+      {id:"consentimiento_procedimientos_confirm", type:"confirm", required:true,
         label:"[PENDIENTE: texto de confirmación sobre información de riesgos, beneficios y alternativas de los procedimientos marcados — lo valida el abogado de NURA]",
         showIf:function(a){return (a.procedimientos_planeados||[]).some(function(v){return v!=="Ninguno por ahora";});}},
       {id:"firma_confirma", type:"confirm", required:true,
