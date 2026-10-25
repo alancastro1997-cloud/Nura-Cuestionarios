@@ -432,16 +432,36 @@ var SECTIONS = [
     ]},
 
   { id:"consentimiento", eyebrow:"Último paso", title:"Aviso de privacidad y consentimiento",
-    note:"[PENDIENTE: resumen del Aviso de Privacidad de NURA Health. Lo redacta y valida el abogado de NURA. Debe declarar el tratamiento de datos de salud para elaborar el plan, el uso de un proveedor de inteligencia artificial como encargado que procesa esos datos, y el consentimiento expreso por separado. Mientras este texto no exista, este cuestionario no envía.]",
+    note:"Aviso de privacidad resumido. NURA Cells (Alan Francisco Castro Villalonga, persona física con actividad empresarial) es responsable de los datos personales del paciente. En NURA Health se usan las respuestas del paciente, incluidos datos de salud, que son datos sensibles, para elaborar su plan de nutrición y entrenamiento, que el médico revisa, modifica y firma. Si el paciente lo autorizó aparte, de forma opcional, un sistema de inteligencia artificial de un proveedor tecnológico, que actúa como encargado y procesa datos fuera de México, redacta un borrador de su plan, de la nota de evolución de sus seguimientos y del resumen de «Antes de tu cita»; a la inteligencia artificial no se envían su CURP, su teléfono ni su domicilio. Si no lo autorizó, el plan lo redacta el médico a mano. Para ejercer sus derechos ARCO o revocar su consentimiento, el paciente puede escribir a privacidad@nuracells.com. Aviso completo: https://www.nuracells.com/aviso-de-privacidad",
     fields:[
       {id:"medico_responsable", type:"text", label:"Nombre de quien levanta esta Historia Clínica", required:true},
       {id:"aviso_privacidad_aceptado", type:"confirm", required:true,
-        label:"[PENDIENTE: texto de aceptación del Aviso de Privacidad de NURA Health — lo valida el abogado de NURA]"},
-      {id:"consentimiento_ia", type:"confirm", required:false, label:"[PENDIENTE: confirmación de que el paciente otorgó su consentimiento EXPRESO para el procesamiento de sus datos de salud con apoyo de un sistema de inteligencia artificial — lo valida el abogado de NURA]"},
+        label:"Confirmo que el paciente leyó el aviso de privacidad de NURA Cells."},
+      {id:"consentimiento_ia", type:"confirm", required:false, label:"Confirmo que el paciente otorgó, con su firma digital (CI-H06), su consentimiento expreso para el procesamiento de sus datos de salud con apoyo de un sistema de inteligencia artificial."},
       {id:"firma_confirma", type:"confirm", required:true,
         label:"Confirmo que esta Historia Clínica fue obtenida mediante interrogatorio directo y exploración física del paciente, y que la información es verídica y completa."}
     ]}
 ];
+
+// ── Consentimiento de IA «una sola vez» (Aviso v1.1, XVI-3; decisión del titular, 23-oct-2026: se pide la primera vez y no más) ──
+// Si el enlace que manda la clínica termina en «ia=ya» después del # (por ejemplo …#id=abc123&ia=ya), este cuestionario NO vuelve a
+// pedir la casilla: muestra un aviso en su lugar y NO manda el campo consentimiento_ia. El fragmento (#…) no viaja al servidor.
+// Esto solo OCULTA la pregunta: quien decide si hay consentimiento es el registro de NURA Health. Un «ia=ya» de más no autoriza
+// nada (sin un consentimiento vigente en el registro, el envío queda «Sin IA»); la primera vez, sin «ia=ya», se pide como siempre.
+var NH_IA_YA_TEXTO = "La decisión de este paciente sobre la inteligencia artificial ya se pidió y quedó registrada (el enlace trae ia=ya): no se vuelve a pedir. El sistema la comprueba contra su registro de consentimientos; si no hay uno vigente, el plan queda sin IA y lo redacta el médico a mano.";
+function nhIaYaPedida_(hash){ return /(?:^|[#&])ia=ya(?:&|$)/.test(String(hash || "")); }
+var NH_IA_YA = nhIaYaPedida_(window.location.hash);
+function nhAplicarIaYa_(campos, seccion){
+  if (!NH_IA_YA) return;
+  for (var i = 0; i < campos.length; i++){
+    if (campos[i].id !== "consentimiento_ia") continue;
+    campos[i].showIf = function(){ return false; };
+    if (seccion) seccion.note = (seccion.note ? seccion.note + " " : "") + NH_IA_YA_TEXTO;
+    else campos.splice(i, 0, {type:"note", text:NH_IA_YA_TEXTO});
+    return;
+  }
+}
+SECTIONS.forEach(function(s){ nhAplicarIaYa_(s.fields, s); });
 
 function fieldById(id){
   for (var s=0;s<SECTIONS.length;s++){
@@ -487,6 +507,7 @@ function finalizeSubmission(){
   // Se manda igual que los otros 3 formularios (Regla 16: el paciente nunca
   // ve el resultado, así que no necesitamos leer la respuesta del servidor).
   var payload = Object.assign({}, state.answers, { formType: TIPO_DE_FORMULARIO });
+  if (NH_IA_YA) delete payload.consentimiento_ia;   // «una sola vez»: lo que se ocultó nunca viaja
   return fetch(NH_ENDPOINT, {
     method: "POST",
     mode: "no-cors",
