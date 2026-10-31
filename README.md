@@ -5,9 +5,9 @@ Formularios web (HTML autónomos, bilingües ES/EN) para el sistema de captació
 ## Contenido
 | Archivo | Qué es |
 |---|---|
-| [`cuestionario_candidatura.html`](cuestionario_candidatura.html) | Formulario "¿Eres candidato?" — captura leads y los envía al CRM con su tag de audiencia (dolor crónico / anti-aging). |
-| [`encuesta_satisfaccion_nps.html`](encuesta_satisfaccion_nps.html) | Encuesta de satisfacción post-tratamiento con NPS (0–10) y estrellas. |
-| [`index.html`](index.html) | Página de inicio con enlaces a ambos formularios. |
+| [`cuestionario_candidatura.html`](cuestionario_candidatura.html) | Formulario "¿Eres candidato?" — **en desuso y apagado desde el 31-oct-2026** (no envía nada; `FORMULARIO_ACTIVO = false`; sin enlace en el índice; `noindex`). Antes: captura de leads con tag de audiencia. |
+| [`encuesta_satisfaccion_nps.html`](encuesta_satisfaccion_nps.html) | **En desuso y apagada desde el 31-oct-2026** (no envía nada; `FORMULARIO_ACTIVO = false`; sin enlace en el índice; `noindex`). Encuesta NPS (0–10) y estrellas. |
+| [`index.html`](index.html) | Página de inicio. Desde el 31-oct-2026 ya no enlaza ningún formulario (candidatura y NPS en desuso); solo da el correo de contacto. |
 | [`seguimiento_resultados.html`](seguimiento_resultados.html) | **Cuestionario de seguimiento de resultados (PROM)**, a los 30, 90 y 180 días del tratamiento. Cinco pasos, con autoguardado. **No se enlaza desde el índice a propósito**: se abre solo desde el enlace personal que el CRM le manda a cada paciente, y sin ese enlace no funciona. |
 
 ## Configuración (antes de usar)

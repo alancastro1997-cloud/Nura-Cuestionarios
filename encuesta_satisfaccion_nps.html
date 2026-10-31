@@ -4,6 +4,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
 <title>NURA Cells · Encuesta de satisfacción / Satisfaction survey</title>
 <style>
   :root{--jade:#2F5233;--jade-d:#223B27;--tint:#EFF7EC;--ink:#1B2A1E;--soft:#4B5A4E;--line:#D9E4D6;--bg:#F6F9F4;--surf:#fff;--warm:#E8963C}
@@ -44,6 +45,9 @@
   footer{text-align:center;color:var(--soft);font-size:.75rem;margin-top:24px}
   [data-en]{display:none}
   body.en [data-es]{display:none} body.en [data-en]{display:revert}
+  .pausa{margin:18px 0 6px;padding:16px 18px;border:1px solid var(--line);border-left:4px solid var(--warm);border-radius:10px;background:var(--surf);font-size:.95rem}
+  .pausa a{color:var(--jade);font-weight:600}
+  form.apagado{opacity:.55}
 </style>
 </head>
 <body>
@@ -55,7 +59,13 @@
     <div class="lang"><button type="button" class="on" onclick="setLang('es',this)">Español</button><button type="button" onclick="setLang('en',this)">English</button></div>
   </header>
 
-  <form id="f">
+  <!-- EN DESUSO Y APAGADO (31-oct-2026, orden del titular): no se envía nada. Para reactivar: FORMULARIO_ACTIVO = true en el script, quitar este bloque, el atributo disabled del botón y el noindex. -->
+  <div class="pausa" id="pausa" role="status">
+    <p data-es style="margin:0">Este cuestionario no está disponible por ahora. Para cualquier duda, escríbanos a <a href="mailto:consultas@nuracells.com">consultas@nuracells.com</a>.</p>
+    <p data-en style="margin:0">This questionnaire is not available at the moment. If you have any questions, please write to us at <a href="mailto:consultas@nuracells.com">consultas@nuracells.com</a>.</p>
+  </div>
+
+  <form id="f" class="apagado" aria-disabled="true">
     <label><span data-es>¿Qué tan probable es que nos recomiendes a un amigo o familiar? (0–10)</span><span data-en>How likely are you to recommend us to a friend or family member? (0–10)</span></label>
     <div class="nps" id="nps"></div>
     <div class="npsends"><span data-es>Nada probable</span><span data-en>Not likely</span><span data-es>Muy probable</span><span data-en>Very likely</span></div>
@@ -86,7 +96,7 @@
       <p data-en><strong>NURA Cells</strong>, through its Health Officer, Dr. Alan Francisco Castro Villalonga (Professional License No. 13111347), with address at Av. Naciones Unidas 5069, Col. Jardines Universidad, 45110 Zapopan, Jalisco, Mexico, is responsible for the processing and protection of your personal data. The Comprehensive Privacy Notice is available, and ARCO rights may be exercised, at our reception desk or by writing to <a href="mailto:consultas@nuracells.com">consultas@nuracells.com</a>. <em>The Spanish version is the legally binding one.</em></p>
     </div>
 
-    <button type="submit" class="submit"><span data-es>Enviar encuesta</span><span data-en>Submit survey</span></button>
+    <button type="submit" class="submit" disabled><span data-es>Enviar encuesta</span><span data-en>Submit survey</span></button>
   </form>
 
   <div class="ok" id="ok"><h2><span data-es>¡Gracias por tu tiempo!</span><span data-en>Thank you for your time!</span></h2><p><span data-es>Tus comentarios son muy valiosos para el equipo NURA.</span><span data-en>Your feedback is very valuable to the NURA team.</span></p></div>
@@ -94,6 +104,22 @@
 </div>
 
 <script>
+  // ====== EN DESUSO (31-oct-2026) ======
+  // Formulario apagado por orden del titular: no hay destino real (WEBHOOK_URL es un
+  // marcador) y antes mostraba «enviado» sin mandar nada. Con false: se deshabilitan
+  // todos los campos y el envío no hace NADA. Para reactivar: true + webhook real.
+  const FORMULARIO_ACTIVO = false;
+  // Corre al terminar de cargar, para alcanzar también los campos que el script crea (p. ej. los botones 0-10 del NPS).
+  document.addEventListener('DOMContentLoaded',function(){
+    const f=document.getElementById('f');
+    if(FORMULARIO_ACTIVO){
+      document.getElementById('pausa').style.display='none';
+      f.classList.remove('apagado'); f.removeAttribute('aria-disabled');
+      f.querySelectorAll('button[type=submit]').forEach(b=>b.disabled=false);
+      return;
+    }
+    f.querySelectorAll('input,select,textarea,button').forEach(el=>el.disabled=true);
+  });
   // ====== CONFIG: URL del Inbound Webhook de GHL (o Apps Script) ======
   const WEBHOOK_URL = "PEGAR_URL_WEBHOOK_GHL_AQUI";
   // Versión del Aviso de Privacidad vigente al momento de la respuesta.
@@ -102,10 +128,11 @@
   const nps=document.getElementById('nps');
   for(let i=0;i<=10;i++){nps.insertAdjacentHTML('beforeend',`<input type="radio" name="nps" id="n${i}" value="${i}"><label for="n${i}">${i}</label>`);}
   const stars=document.getElementById('stars');
-  stars.addEventListener('click',e=>{const v=e.target.dataset.v;if(!v)return;document.getElementById('estrellas').value=v;[...stars.children].forEach(s=>s.classList.toggle('on',s.dataset.v<=v));});
+  stars.addEventListener('click',e=>{if(!FORMULARIO_ACTIVO)return;const v=e.target.dataset.v;if(!v)return;document.getElementById('estrellas').value=v;[...stars.children].forEach(s=>s.classList.toggle('on',s.dataset.v<=v));});
   function setLang(l,btn){document.body.classList.toggle('en',l==='en');document.querySelectorAll('.lang button').forEach(b=>b.classList.remove('on'));btn.classList.add('on');document.documentElement.lang=l;}
   document.getElementById('f').addEventListener('submit',async function(e){
     e.preventDefault();
+    if(!FORMULARIO_ACTIVO) return; // apagado: no se envía nada
     const form=e.target;
     const data=Object.fromEntries(new FormData(form).entries());
     // Una casilla sin marcar no viaja en FormData. Se normaliza para que

@@ -4,6 +4,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
 <title>NURA Cells · ¿Eres candidato? / Are you a candidate?</title>
 <style>
   :root{--jade:#2F5233;--jade-d:#223B27;--tint:#EFF7EC;--ink:#1B2A1E;--soft:#4B5A4E;--line:#D9E4D6;--bg:#F6F9F4;--surf:#fff;--warm:#E8963C;}
@@ -54,6 +55,9 @@
   body.en [data-en]{display:revert}
   body.en li[data-en],body.en p[data-en]{display:list-item}
   body.en p[data-en]{display:block}
+  .pausa{margin:18px 0 6px;padding:16px 18px;border:1px solid var(--line);border-left:4px solid var(--warm);border-radius:10px;background:var(--surf);font-size:.95rem}
+  .pausa a{color:var(--jade);font-weight:600}
+  form.apagado{opacity:.55}
 </style>
 </head>
 <body>
@@ -68,7 +72,13 @@
     </div>
   </header>
 
-  <form id="f">
+  <!-- EN DESUSO Y APAGADO (31-oct-2026, orden del titular): no se envía nada. Para reactivar: FORMULARIO_ACTIVO = true en el script, quitar este bloque, el atributo disabled del botón y el noindex. -->
+  <div class="pausa" id="pausa" role="status">
+    <p data-es style="margin:0">Este cuestionario no está disponible por ahora. Para cualquier duda, escríbanos a <a href="mailto:consultas@nuracells.com">consultas@nuracells.com</a>.</p>
+    <p data-en style="margin:0">This questionnaire is not available at the moment. If you have any questions, please write to us at <a href="mailto:consultas@nuracells.com">consultas@nuracells.com</a>.</p>
+  </div>
+
+  <form id="f" class="apagado" aria-disabled="true">
     <label><span data-es>Nombre completo</span><span data-en>Full name</span> <span class="req">*</span></label>
     <input name="paciente_nombre" required>
 
@@ -181,7 +191,7 @@
       </label>
     </div>
 
-    <button type="submit" class="submit" id="sb"><span data-es>Enviar</span><span data-en>Submit</span></button>
+    <button type="submit" class="submit" id="sb" disabled><span data-es>Enviar</span><span data-en>Submit</span></button>
     <p class="hint" data-es>Los resultados pueden variar; todo tratamiento requiere valoración médica previa.</p>
     <p class="hint" data-en>Results may vary; every treatment requires a prior medical assessment.</p>
   </form>
@@ -195,6 +205,22 @@
 </div>
 
 <script>
+  // ====== EN DESUSO (31-oct-2026) ======
+  // Formulario apagado por orden del titular: no hay destino real (WEBHOOK_URL es un
+  // marcador) y antes mostraba «enviado» sin mandar nada. Con false: se deshabilitan
+  // todos los campos y el envío no hace NADA. Para reactivar: true + webhook real.
+  const FORMULARIO_ACTIVO = false;
+  // Corre al terminar de cargar, para alcanzar también los campos que el script crea (p. ej. los botones 0-10 del NPS).
+  document.addEventListener('DOMContentLoaded',function(){
+    const f=document.getElementById('f');
+    if(FORMULARIO_ACTIVO){
+      document.getElementById('pausa').style.display='none';
+      f.classList.remove('apagado'); f.removeAttribute('aria-disabled');
+      f.querySelectorAll('button[type=submit]').forEach(b=>b.disabled=false);
+      return;
+    }
+    f.querySelectorAll('input,select,textarea,button').forEach(el=>el.disabled=true);
+  });
   // ====== CONFIG ======
   // Pega aquí la URL del "Inbound Webhook" de tu Workflow en GHL (o del Apps Script).
   // Cómo obtenerla: GHL → Automation → Workflow nuevo → Trigger "Inbound Webhook" → copiar URL.
@@ -211,6 +237,7 @@
   }
   document.getElementById('f').addEventListener('submit',async function(e){
     e.preventDefault();
+    if(!FORMULARIO_ACTIVO) return; // apagado: no se envía nada
     const form=e.target;
     const btn=document.getElementById('sb'); btn.disabled=true;
     const data=Object.fromEntries(new FormData(form).entries());
